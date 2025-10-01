@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ClockQuest — Learn to read analog time</title>
 <meta name="color-scheme" content="light only">
+<!-- Google Fonts: Press Start 2P (pixel vibe) -->
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   /* ===== Maple Bear palette (light) ===== */
   :root{
@@ -13,8 +15,6 @@
     --ink:#111111;
     --red:#c1121f;   /* Maple red */
     --red-2:#a50f1a;
-    --accent:#c1121f;
-    --accent2:#ff4d5a;
     --good:#1f7a3f;
     --bad:#cc2936;
     --muted:#6b6f76;
@@ -23,7 +23,7 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial}
   button,select,input{font-family:inherit}
-  a{color:var(--accent);text-decoration:underline}
+  a{color:var(--red);text-decoration:underline}
 
   /* Generic UI */
   .wrap{max-width:1024px;margin:auto;padding:16px}
@@ -48,11 +48,23 @@
 
   /* Intro screen */
   .intro{display:grid;place-items:center;min-height:70svh}
-  .title{display:flex;align-items:center;gap:8px;user-select:none}
-  .title .word{font-weight:900;font-size:clamp(28px,6vw,64px);letter-spacing:1px;text-transform:uppercase}
-  .title .pixel{letter-spacing:2px;text-shadow:2px 2px 0 #000}
-  .title .clockO{display:inline-grid;place-items:center;border:3px solid #000;border-radius:50%;width:1.1em;height:1.1em;background:#fff;box-shadow:3px 3px 0 #000}
-  .subtitle{margin-top:6px;color:#333}
+  .title{display:flex;align-items:center;gap:10px;user-select:none}
+  /* Tamanho do título aumentado e responsivo */
+  .title .word{font-weight:900;font-size:clamp(34px,8vw,92px);letter-spacing:1px;text-transform:uppercase;line-height:1}
+  /* Pixel font aplicada só no título para vibe “game” */
+  .title .pixel{font-family:"Press Start 2P", system-ui, sans-serif; letter-spacing:2px}
+  /* “O” com relógio: agora bem maior e proporcional ao texto */
+  .title .clockO{
+    display:inline-grid;place-items:center;
+    border:4px solid #000;border-radius:50%;
+    /* tamanho do O relativo ao tamanho da palavra: bem visível */
+    width: 1.35em; height: 1.35em;
+    background:#fff; box-shadow:4px 4px 0 #0001;
+    /* alinha com a linha do texto */
+    vertical-align:middle;
+  }
+  .subtitle{margin-top:8px;color:#333}
+
   .intro-panel{display:grid;gap:14px;margin-top:18px}
   .mode-grid{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr))}
   @media (max-width:700px){.mode-grid{grid-template-columns:1fr}}
@@ -104,9 +116,10 @@
   <section id="intro" class="intro">
     <div class="card" style="padding:24px; max-width:860px">
       <div class="title">
-        <div class="word pixel">Cl</div>
-        <canvas id="logoClock" width="90" height="90" class="clockO" aria-label="Clock O"></canvas>
-        <div class="word pixel">ckQuest</div>
+        <div class="word pixel">CL</div>
+        <!-- canvas O MAIOR: sem width/height fixos; o JS ajusta nítido -->
+        <canvas id="logoClock" class="clockO" aria-label="Clock O"></canvas>
+        <div class="word pixel">CKQUEST</div>
       </div>
       <div class="subtitle">Bora treinar como falar as horas em inglês — past / half / to — de um jeito divertido. 🎮</div>
 
@@ -264,22 +277,38 @@ function enterGame(mode){
   $("#game").style.display="block";
   $("#modeLabel").textContent = mode[0].toUpperCase()+mode.slice(1);
   $("#level").value = levelIntro.value;
-  // challenge panel only if challenge
   $("#challengePanel").style.display = (mode==="challenge" ? "block" : "none");
-  // reset status area
   resetSession();
 }
 
 /* ===== Logo clock (the 'O' live clock) ===== */
-const logoCtx = $("#logoClock").getContext("2d");
+/* Mantém o canvas nítido em qualquer tamanho e atualiza a hora */
+const logoCanvas = $("#logoClock");
+const logoCtx = logoCanvas.getContext("2d");
+
+function resizeCanvasToDisplaySize(cv, ctx){
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const rect = cv.getBoundingClientRect();
+  const needW = Math.max(80, Math.round(rect.width * dpr));
+  const needH = Math.max(80, Math.round(rect.height * dpr));
+  if (cv.width !== needW || cv.height !== needH){
+    cv.width = needW; cv.height = needH;
+    ctx.setTransform(dpr,0,0,dpr,0,0); // normalize transforms
+  }
+}
+
 function drawLogoClock(){
-  const c = $("#logoClock"); const w=c.width, h=c.height; const r=Math.min(w,h)/2-8;
-  logoCtx.clearRect(0,0,w,h);
+  resizeCanvasToDisplaySize(logoCanvas, logoCtx);
+  const w = logoCanvas.clientWidth, h = logoCanvas.clientHeight;
+  const r = Math.min(w,h)/2 - 8;
+  logoCtx.clearRect(0,0,logoCanvas.width,logoCanvas.height);
   logoCtx.save(); logoCtx.translate(w/2,h/2);
+
   // face
   logoCtx.fillStyle="#fff"; logoCtx.beginPath(); logoCtx.arc(0,0,r+6,0,Math.PI*2); logoCtx.fill();
   logoCtx.lineWidth=3; logoCtx.strokeStyle="#000"; logoCtx.stroke();
-  // numbers 12/3/6/9 dots
+
+  // dots (12/3/6/9 mais fortes)
   for(let i=0;i<12;i++){
     const ang = i*Math.PI/6 - Math.PI/2;
     logoCtx.fillStyle = (i%3===0) ? "#000" : "#0008";
@@ -287,23 +316,26 @@ function drawLogoClock(){
     logoCtx.arc(Math.cos(ang)*(r-6), Math.sin(ang)*(r-6), (i%3===0)?3:2, 0, Math.PI*2);
     logoCtx.fill();
   }
-  // time now
+
+  // hora atual
   const now=new Date();
   const hnow=now.getHours(), mnow=now.getMinutes(), snow=now.getSeconds();
   const mh = (mnow/60)*Math.PI*2 - Math.PI/2;
   const hh = ((hnow%12)/12 + mnow/720)*Math.PI*2 - Math.PI/2;
   const sh = (snow/60)*Math.PI*2 - Math.PI/2;
 
-  // hands
+  // ponteiros
   logoCtx.strokeStyle="#000"; logoCtx.lineCap="round";
   logoCtx.lineWidth=4; logoCtx.beginPath(); logoCtx.moveTo(0,0); logoCtx.lineTo(Math.cos(hh)*(r*0.45), Math.sin(hh)*(r*0.45)); logoCtx.stroke();
   logoCtx.lineWidth=3; logoCtx.beginPath(); logoCtx.moveTo(0,0); logoCtx.lineTo(Math.cos(mh)*(r*0.70), Math.sin(mh)*(r*0.70)); logoCtx.stroke();
   logoCtx.strokeStyle="#c1121f"; logoCtx.lineWidth=2; logoCtx.beginPath(); logoCtx.moveTo(0,0); logoCtx.lineTo(Math.cos(sh)*(r*0.78), Math.sin(sh)*(r*0.78)); logoCtx.stroke();
+
   // center
   logoCtx.fillStyle="#000"; logoCtx.beginPath(); logoCtx.arc(0,0,3,0,Math.PI*2); logoCtx.fill();
   logoCtx.restore();
 }
-drawLogoClock(); setInterval(drawLogoClock, 1000);
+drawLogoClock();
+setInterval(drawLogoClock, 1000);
 
 /* ===== GAME: drawing & logic ===== */
 const ctx = $("#clock").getContext("2d");
@@ -379,13 +411,12 @@ function levelMinutes(){
 function resetSession(){
   score=0; lives=3; attempt=0; seconds=0;
   $("#score").textContent=score; $("#lives").textContent=lives; $("#timer").textContent="—";
-  $("#modeLabel").textContent = modeTitle();
+  $("#modeLabel").textContent = selectedMode[0].toUpperCase()+selectedMode.slice(1);
   $("#answerZone").classList.remove("stop");
   $("#report").innerHTML = renderHighscores();
   drawClock(target.h,target.m);
   if(selectedMode==="challenge"){ $("#timer").textContent="Ready"; }
 }
-function modeTitle(){ return selectedMode[0].toUpperCase()+selectedMode.slice(1); }
 
 function generateTime(){
   const mins=levelMinutes(); const m=mins[randInt(0,mins.length-1)];
@@ -475,7 +506,6 @@ function secondsForLevel(){
 }
 const overlay=$("#overlay"), countdown=$("#countdown");
 $("#btnStartChallenge").addEventListener("click", ()=>{
-  // show 3-2-1, then start
   overlay.classList.add("show");
   let n=3; countdown.textContent=n;
   const iv=setInterval(()=>{
@@ -548,18 +578,16 @@ $("#btnCheck").addEventListener("click", checkTextAnswer);
 $("#btnSkip").addEventListener("click", generateTime);
 $("#answer").addEventListener("focus", ()=> $("#answerZone").classList.add("stop"));
 
-$("#modeLabel").textContent = modeTitle();
 $("#level").addEventListener("change", e=>{ level=e.target.value; });
 $("#btnHome").addEventListener("click", ()=>{ $("#game").style.display="none"; $("#intro").style.display="grid"; });
 $("#btnBackHome").addEventListener("click", ()=>{ $("#game").style.display="none"; $("#intro").style.display="grid"; });
-
-/* “Learn / Practice / Challenge” toggles (internal) */
-document.getElementById("level").value = levelIntro.value;
 document.getElementById("how").addEventListener("click",(e)=>{e.preventDefault(); alert("GitHub Pages: 1) Create a repo and push this index.html. 2) Settings → Pages → Source: 'Deploy from a branch', branch main, /. 3) Open the published link.");});
 
 /* Init first draw */
+let currentShown={h:3,m:15};
+drawLogoClock(); // já está em interval
 drawClock(3,15);
 </script>
 </body>
 </html>
-Mr. Meia is proud of you.
+       Mr. Meia is proud of you!!!!
