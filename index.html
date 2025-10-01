@@ -1,67 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ClockQuest — Ler as horas (PT/EN)</title>
+<title>ClockQuest — Learn to read analog time</title>
 <style>
-  /* Answer Zone */
-.answer-zone {
-  border: 2px solid #2f3b63;
-  border-radius: 14px;
-  padding: 14px;
-  position: relative;
-  box-shadow: 0 8px 24px rgba(0,0,0,.25);
-  animation: zonePulse 2.5s ease-in-out infinite;
-}
-.answer-zone.stop-pulse { animation: none; }
-
-@keyframes zonePulse {
-  0%,100% { box-shadow: 0 0 0 rgba(111,255,233,0); }
-  50% { box-shadow: 0 0 0 8px rgba(111,255,233,0.08); }
-}
-
-#prompt {
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin: 0 0 8px;
-}
-
-.mc-grid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(1, minmax(0,1fr));
-}
-@media (min-width: 560px) { .mc-grid { grid-template-columns: repeat(3,1fr); } }
-
-.choice {
-  display: flex; align-items: center; gap: 10px;
-  border: 2px solid #2f3b63;
-  background: #0b1c3b;
-  padding: 14px 12px;
-  border-radius: 12px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: .2px;
-  min-height: 56px;
-  text-align: left;
-}
-.choice:hover, .choice:focus { outline: 0; border-color: var(--accent2); filter: brightness(1.1); }
-.choice .badge-letter {
-  width: 32px; height: 32px; border-radius: 8px;
-  display: grid; place-items: center;
-  background: var(--accent); color:#042a2b; font-weight: 900;
-}
-.choice.correct { border-color: var(--good); background: rgba(68,209,124,.12); }
-.choice.wrong   { border-color: var(--bad);  background: rgba(255,107,107,.12); }
-
-/* Typing mode field bigger */
-#typing input[type=text]{ font-size:1rem; width:100%; max-width:520px; }
-
-/* Small “press A/B/C” hint */
-.kbd-hint{opacity:.8;font-size:.9rem;margin-top:6px}
-.kbd {border:1px solid #2f3b63;border-bottom-width:3px;border-radius:6px;padding:2px 6px}
-
   :root{
     --bg:#0b132b; --panel:#1c2541; --accent:#5bc0be; --accent2:#6fffe9; --good:#44d17c; --bad:#ff6b6b; --txt:#eef2f7;
   }
@@ -80,8 +23,8 @@
   button.good{background:var(--good);color:#06220f;border:0}
   button.bad{background:var(--bad);color:#2a0707;border:0}
   .pill{padding:6px 10px;border-radius:999px;background:#0f2045;border:1px solid #2f3b63}
-  .clock-wrap{display:grid;grid-template-columns:1fr 320px;gap:16px}
-  @media (max-width:900px){.clock-wrap{grid-template-columns:1fr}}
+  .clock-wrap{display:grid;grid-template-columns:1fr 360px;gap:16px}
+  @media (max-width:960px){.clock-wrap{grid-template-columns:1fr}}
   canvas{width:100%;height:auto;background:#0f1a34;border-radius:50%;aspect-ratio:1/1;display:block}
   .qa{display:grid;gap:8px}
   .hint{font-size:.95rem;opacity:.9}
@@ -91,87 +34,128 @@
   .progress{height:10px;background:#0f2045;border-radius:8px;overflow:hidden}
   .progress>span{display:block;height:100%;background:var(--accent2);width:0%}
   a{color:var(--accent2)}
+
+  /* ===== Answer Zone: highlight ===== */
+  .answer-zone {
+    border: 2px solid #2f3b63;
+    border-radius: 14px;
+    padding: 14px;
+    position: relative;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    animation: zonePulse 2.5s ease-in-out infinite;
+  }
+  .answer-zone.stop-pulse { animation: none; }
+  @keyframes zonePulse {
+    0%,100% { box-shadow: 0 0 0 rgba(111,255,233,0); }
+    50% { box-shadow: 0 0 0 8px rgba(111,255,233,0.08); }
+  }
+  #prompt { font-size: 1.15rem; font-weight: 800; margin: 0 0 8px; }
+
+  .mc-grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
+  @media (min-width: 560px){ .mc-grid { grid-template-columns: repeat(3,1fr); } }
+
+  .choice {
+    display:flex; align-items:center; gap:10px;
+    border:2px solid #2f3b63; background:#0b1c3b;
+    padding:14px 12px; border-radius:12px;
+    font-size:1.05rem; font-weight:700; letter-spacing:.2px;
+    min-height:56px; text-align:left;
+  }
+  .choice:hover,.choice:focus{outline:0;border-color:var(--accent2);filter:brightness(1.1)}
+  .choice .badge-letter{
+    width:32px;height:32px;border-radius:8px;display:grid;place-items:center;
+    background:var(--accent);color:#042a2b;font-weight:900;
+  }
+  .choice.correct{border-color:var(--good);background:rgba(68,209,124,.12)}
+  .choice.wrong{border-color:var(--bad);background:rgba(255,107,107,.12)}
+
+  /* Typing mode field bigger */
+  #typing input[type=text]{ font-size:1rem; width:100%; max-width:520px; }
+
+  /* Small hint for keyboard */
+  .kbd-hint{opacity:.8;font-size:.9rem;margin-top:6px}
+  .kbd{border:1px solid #2f3b63;border-bottom-width:3px;border-radius:6px;padding:2px 6px}
 </style>
 </head>
 <body>
 <header>
   <div class="brand">🕒 ClockQuest</div>
-  <div class="controls" role="group" aria-label="Configurações">
+  <div class="controls" role="group" aria-label="Settings">
     <label class="pill">
-      <span class="sr-only">Idioma</span>
-    </label>
-    <label class="pill">
-      <span id="lblMode">Modo</span>
+      <span id="lblMode">Mode</span>
       <select id="mode">
-        <option value="learn">Aprender</option>
-        <option value="practice" selected>Praticar</option>
-        <option value="challenge">Desafio</option>
+        <option value="learn">Learn</option>
+        <option value="practice" selected>Practice</option>
+        <option value="challenge">Challenge</option>
       </select>
     </label>
     <label class="pill">
-      <span id="lblLevel">Nível</span>
+      <span id="lblLevel">Level</span>
       <select id="level">
-        <option value="easy">Fácil</option>
-        <option value="medium" selected>Médio</option>
-        <option value="hard">Difícil</option>
+        <option value="easy">Easy</option>
+        <option value="medium" selected>Medium</option>
+        <option value="hard">Hard</option>
       </select>
     </label>
-    <button id="toggle-contrast" class="pill" aria-pressed="false">Alto contraste</button>
+    <button id="toggle-contrast" class="pill" aria-pressed="false">High contrast</button>
   </div>
 </header>
 
 <main>
   <section class="app card" aria-live="polite">
     <div class="clock-wrap">
+      <!-- Clock -->
       <div class="card">
-        <canvas id="clock" width="600" height="600" aria-label="Relógio analógico"></canvas>
+        <canvas id="clock" width="600" height="600" aria-label="Analog clock"></canvas>
         <div class="controls" style="margin-top:10px">
-          <button id="btnNew" class="primary">Gerar hora</button>
-          <button id="btnHint">Dica</button>
-          <button id="btnShowNums">Mostrar minutos (5,10…)</button>
-          <button id="btnSetAsk">Pedir para ajustar ponteiros</button>
+          <button id="btnNew" class="primary">Generate time</button>
+          <button id="btnHint">Hint</button>
+          <button id="btnShowNums">Show minute numbers</button>
+          <button id="btnSetAsk">Ask to adjust hands</button>
         </div>
       </div>
 
+      <!-- Right side: status + answers + report -->
       <div class="qa">
         <div class="status">
-          <span class="badge"><span id="lblScore">Pontuação</span>: <strong id="score">0</strong></span>
-          <span class="badge"><span id="lblTime">Tempo</span>: <strong id="timer">—</strong></span>
-          <span class="badge"><span id="lblLives">Vidas</span>: <strong id="lives">3</strong> <span class="heart">♥</span></span>
+          <span class="badge"><span id="lblScore">Score</span>: <strong id="score">0</strong></span>
+          <span class="badge"><span id="lblTime">Time</span>: <strong id="timer">—</strong></span>
+          <span class="badge"><span id="lblLives">Lives</span>: <strong id="lives">3</strong> <span class="heart">♥</span></span>
         </div>
+
+        <!-- ANSWER ZONE -->
         <div class="card answer-zone" id="answerZone">
-  <p id="prompt">Click “Generate time”.</p>
+          <p id="prompt">Click “Generate time”.</p>
 
-  <div class="controls" style="margin-bottom:8px">
-    <button id="btnMC" class="pill">Multiple choice</button>
-    <button id="btnTyping" class="pill">Typing</button>
-    <button id="btnDrag" class="pill">Drag hands</button>
-  </div>
+          <div class="controls" style="margin-bottom:8px">
+            <button id="btnMC" class="pill">Multiple choice</button>
+            <button id="btnTyping" class="pill">Typing</button>
+            <button id="btnDrag" class="pill">Drag hands</button>
+          </div>
 
-  <!-- Multiple choice -->
-  <div id="mc" class="mc-grid" hidden></div>
-  <div class="kbd-hint" id="kbdHint" hidden>
-    Tip: press <span class="kbd">A</span>, <span class="kbd">B</span> or <span class="kbd">C</span>
-  </div>
+          <div id="mc" class="mc-grid" hidden></div>
+          <div class="kbd-hint" id="kbdHint" hidden>
+            Tip: press <span class="kbd">A</span>, <span class="kbd">B</span> or <span class="kbd">C</span>
+          </div>
 
-  <!-- Typing -->
-  <div id="typing" class="" hidden>
-    <div class="controls">
-      <input id="answer" type="text" placeholder="Ex.: a quarter past three / 3:15" />
-      <button id="btnCheck" class="good">Check</button>
-      <button id="btnSkip" class="bad">Skip</button>
-    </div>
-  </div>
+          <div id="typing" hidden>
+            <div class="controls">
+              <input id="answer" type="text" placeholder='e.g., "a quarter past three" or "3:15"' />
+              <button id="btnCheck" class="good">Check</button>
+              <button id="btnSkip" class="bad">Skip</button>
+            </div>
+          </div>
 
-  <div id="dragInfo" class="hint" hidden></div>
-  <div class="hint" id="hintArea"></div>
+          <div id="dragInfo" class="hint" hidden></div>
+          <div class="hint" id="hintArea"></div>
 
-  <div style="margin-top:8px">
-    <div class="progress" aria-label="Skill progress"><span id="pbar"></span></div>
-  </div>
-</div>
+          <div style="margin-top:8px">
+            <div class="progress" aria-label="Skill progress"><span id="pbar"></span></div>
+          </div>
+        </div>
+
         <div class="card">
-          <h3 id="lblReport">Relatório</h3>
+          <h3>Report</h3>
           <div id="report"></div>
         </div>
       </div>
@@ -180,49 +164,32 @@
 </main>
 
 <footer>
-  <small>© 2025 ClockQuest • <a href="#" id="how">Como publicar no GitHub Pages</a></small>
+  <small>© 2025 ClockQuest • <a href="#" id="how">How to publish on GitHub Pages</a></small>
 </footer>
 
 <script>
-/* ===== i18n ===== */
-const I18N = {
-  pt:{
-    mode:"Modo", level:"Nível", score:"Pontuação", time:"Tempo", lives:"Vidas",
-    clickGenerate:"Clique em “Gerar hora”.", newTime:"Nova hora gerada!",
-    hintPast:"Use “past” para 1–29 min e “half past” para :30.",
-    hintTo:"Use “to” quando faltam X minutos para a próxima hora (31–59).",
-    correct:"Certo! +10",
-    near:"Quase! Confira past/to e os minutos.",
-    wrong:"Ops! Compare os ponteiros.",
-    showNumsOn:"Minutos visíveis", showNumsOff:"Minutos ocultos",
-    dragOn:"Arraste os ponteiros até a resposta pedida e clique em Conferir.",
-    askAdjust:"Agora o exercício é posicionar os ponteiros.",
-    reportTitle:"Relatório",
-    ptOkTryEn:"Certo em PT. Tente também em EN com past/to.",
-    howGh:`Passos: 1) Crie repositório, envie este index.html. 2) Settings → Pages → Source: 'Deploy from a branch', branch main, / (root). 3) Abra o link publicado.`
-  },
-  en:{
-    mode:"Mode", level:"Level", score:"Score", time:"Time", lives:"Lives",
-    clickGenerate:"Click “Generate time”.", newTime:"New time!",
-    hintPast:"Use “past” for 1–29 and “half past” for :30.",
-    hintTo:"Use “to” when minutes remain to next hour (31–59).",
-    correct:"Correct! +10",
-    near:"Almost! Check past/to and minutes.",
-    wrong:"Oops! Compare the hands.",
-    showNumsOn:"Minutes shown", showNumsOff:"Minutes hidden",
-    dragOn:"Drag the hands to your answer, then press Check.",
-    askAdjust:"Now you must position the hands.",
-    reportTitle:"Report",
-    ptOkTryEn:"Correct in PT. Also try EN using past/to.",
-    howGh:`Steps: 1) Create a repo, push this index.html. 2) Settings → Pages → Source: 'Deploy from a branch', branch main, / (root). 3) Open the published link.`
-  }
-};
-const $ = s=>document.querySelector(s);
-let LANG = localStorage.getItem("cq_lang")||"pt";
-const t = k => (I18N[LANG]||I18N.pt)[k]||k;
-
-/* ===== Clock drawing ===== */
+/* ===== Small helpers ===== */
+const $ = s => document.querySelector(s);
 const ctx = $("#clock").getContext("2d");
+
+/* ===== Texts (EN only) ===== */
+const TXT = {
+  clickGenerate: 'Click “Generate time”.',
+  newTime: 'New time!',
+  hintPast: 'Use “past” for 1–29 and “half past” for :30.',
+  hintTo: 'Use “to” when minutes remain to next hour (31–59).',
+  correct: 'Correct! +10',
+  near: 'Almost! Check past/to and minutes.',
+  wrong: 'Oops! Compare the hands.',
+  reportTitle: 'Report',
+  howGh: "Steps: 1) Create a repo and push this index.html. 2) Settings → Pages → Source: 'Deploy from a branch', branch main, /. 3) Open the published link.",
+  showNumsOn: "Hide minute numbers",
+  showNumsOff: "Show minute numbers",
+  dragOn: "Drag the hands to your answer, then press Check.",
+  askAdjust: "Now you must position the hands."
+};
+
+/* ===== Clock drawing (top=12 o'clock) ===== */
 let showMinuteNums=false;
 function drawClock(h=3,m=15){
   const c = $("#clock"); const w=c.width, hgt=c.height; const r = Math.min(w,hgt)/2-20;
@@ -233,9 +200,9 @@ function drawClock(h=3,m=15){
   ctx.beginPath(); ctx.arc(0,0,r+10,0,Math.PI*2); ctx.fillStyle="#102246"; ctx.fill();
   ctx.lineWidth=6; ctx.strokeStyle="#203a6c"; ctx.stroke();
 
-  // ticks
+  // minute ticks (0..59) with 12 at top
   for(let i=0;i<60;i++){
-    const ang = i*Math.PI/30;
+    const ang = i*Math.PI/30 - Math.PI/2; // rotate so 0 is top
     const len = (i%5===0)?14:6;
     ctx.beginPath();
     ctx.moveTo(Math.cos(ang)*(r-len), Math.sin(ang)*(r-len));
@@ -247,22 +214,21 @@ function drawClock(h=3,m=15){
     if(showMinuteNums && i%5===0){
       ctx.fillStyle="#cfe9f3";
       ctx.font="14px system-ui";
-      const text = String(i===0?60:i);
-      ctx.fillText(text, Math.cos(ang)*(r-34)-6, Math.sin(ang)*(r-34)+5);
+      const label = (i===0?60:i); // show 60 at top
+      ctx.fillText(String(label), Math.cos(ang)*(r-34)-6, Math.sin(ang)*(r-34)+5);
     }
   }
 
-  // numbers 1-12
+  // numbers 1..12 placed with top=12
   ctx.fillStyle="#e6f6ff"; ctx.font="22px system-ui";
   for(let n=1;n<=12;n++){
-  const ang = (n * Math.PI / 6) - Math.PI/2; // agora começa no topo
-  ctx.fillText(String(n), Math.cos(ang)*(r-52)-8, Math.sin(ang)*(r-52)+8);
-}
+    const ang = (n*Math.PI/6) - Math.PI/2;
+    ctx.fillText(String(n), Math.cos(ang)*(r-52)-8, Math.sin(ang)*(r-52)+8);
+  }
 
-
-  // hands
- const mh = (m/60)*Math.PI*2 - Math.PI/2;
-const hh = ((h%12)/12 + m/720)*Math.PI*2 - Math.PI/2;
+  // hands (minute/hour) rotated with top=12
+  const mh = (m/60)*Math.PI*2 - Math.PI/2;
+  const hh = ((h%12)/12 + m/720)*Math.PI*2 - Math.PI/2;
 
   // hour hand
   ctx.strokeStyle="#6fffe9"; ctx.lineWidth=8; ctx.lineCap="round";
@@ -276,54 +242,96 @@ const hh = ((h%12)/12 + m/720)*Math.PI*2 - Math.PI/2;
   ctx.restore();
 }
 
-/* ===== Time generation & conversion ===== */
+/* ===== Time utils ===== */
 function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function pad2(n){return (n<10?'0':'')+n;}
-function normalize(h,m){ h=((h%24)+24)%24; if(m>=60){h+=Math.floor(m/60); m=m%60;} if(m<0){h-=Math.ceil((0-m)/60); m=60-((-m)%60); if(m===60){m=0; h++;}} return {h:((h%24)+24)%24,m}; }
-
-function toEnglish(h,m){
-  const h12 = ((h%12)||12), next = ((h+1)%12)||12;
-  const M = m;
-  if(M===0) return `${words[h12]} o’clock`;
-  if(M===15) return `a quarter past ${words[h12]}`;
-  if(M===30) return `half past ${words[h12]}`;
-  if(M<30) return `${words[M]} past ${words[h12]}`;
-  if(M===45) return `a quarter to ${words[next]}`;
-  const remain = 60-M;
-  return `${words[remain]} to ${words[next]}`;
-}
 const words = {
   1:"one",2:"two",3:"three",4:"four",5:"five",6:"six",7:"seven",8:"eight",9:"nine",10:"ten",11:"eleven",12:"twelve",
   13:"thirteen",14:"fourteen",15:"fifteen",16:"sixteen",17:"seventeen",18:"eighteen",19:"nineteen",
   20:"twenty",21:"twenty one",22:"twenty two",23:"twenty three",24:"twenty four",25:"twenty five",
   26:"twenty six",27:"twenty seven",28:"twenty eight",29:"twenty nine"
 };
-function toPortuguese(h,m){
-  const h12 = ((h%12)||12);
-  if(m===0) return `${h12}h`;
-  return `${h12}h${pad2(m)}`;
+function toEnglish(h,m){
+  const h12 = ((h%12)||12), next = ((h+1)%12)||12;
+  if(m===0) return `${words[h12]} o’clock`;
+  if(m===15) return `a quarter past ${words[h12]}`;
+  if(m===30) return `half past ${words[h12]}`;
+  if(m<30) return `${words[m]} past ${words[h12]}`;
+  if(m===45) return `a quarter to ${words[next]}`;
+  const remain = 60-m;
+  return `${words[remain]} to ${words[next]}`;
 }
 
 /* ===== Game Engine ===== */
-let target={h:3,m:15}, mode="practice", level="medium", askByDrag=false;
+let target={h:3,m:15}, mode="practice", level="medium";
 let score=0,lives=3,timer=null,seconds=0,attempt=0;
+let dragMode=false, dragHand=null;
+let currentShown={h:3,m:15};
 
 function levelMinutes(){
-  if(level==="easy") return [0,5,10,15,20,25,30,35,40,45,50,55];
+  if(level==="easy") return [0,5,10,15,20,25,30,35,40,45,50,55].filter(x=>x<=40?true:[0,5,10,15,20,25,30].includes(x));
   if(level==="medium") return [0,5,10,15,20,25,30,35,40,45,50,55];
   return Array.from({length:60},(_,i)=>i);
 }
+
 function generateTime(){
-  const mins = levelMinutes(); let m = mins[randInt(0,mins.length-1)];
-  if(level==="easy" && m>40) m=[0,5,10,15,20,25,30][randInt(0,6)];
+  const mins = levelMinutes(); const m = mins[randInt(0,mins.length-1)];
   const h = randInt(1,12);
   target={h,m};
   drawClock(h,m);
   attempt=0;
   $("#prompt").textContent = TXT.newTime;
-
   $("#hintArea").textContent = "";
   buildMC();
+}
+
+function englishAcceptList(h,m){
+  const list = [];
+  list.push(toEnglish(h,m));
+  list.push(`${((h%12)||12)}:${pad2(m)}`); // numeric 12-hour
+  if(m===0) list.push(`${((h%12)||12)} oclock`, `${((h%12)||12)} o’clock`);
+  return list.map(s=>s.toLowerCase());
+}
+
+function checkTextAnswer(){
+  const val = $("#answer").value.trim().toLowerCase();
+  const en = englishAcceptList(target.h,target.m);
+  attempt++;
+  const correctEN = en.includes(val);
+  if(correctEN){
+    onCorrect();
+  } else if(similar(val, en)){
+    flash(TXT.near);
+  } else {
+    onWrong();
+  }
+}
+function similar(val, list){
+  return list.some(x=>lev(val,x)<=2);
+}
+function lev(a,b){
+  const m=[]; for(let i=0;i<=b.length;i++){m[i]=[i]} for(let j=0;j<=a.length;j++){m[0][j]=j}
+  for(let i=1;i<=b.length;i++){for(let j=1;j<=a.length;j++){
+    m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(b[i-1]==a[j-1]?0:1));
+  }}
+  return m[b.length][a.length];
+}
+
+function onCorrect(){
+  score+=10+(attempt===1?5:0);
+  $("#score").textContent=score;
+  flash(TXT.correct);
+  progress(10);
+  $("#answerZone").classList.add("stop-pulse");
+  if(mode==="challenge") generateTime();
+}
+function onWrong(){
+  if(++attempt>=3){ giveHint(); }
+  lives--; $("#lives").textContent=lives;
+  flash(TXT.wrong);
+  if(mode==="challenge" && lives<=0) endChallenge();
+}
+
 function buildMC(){
   const correct = toEnglish(target.h,target.m);
   const set = new Set([correct]);
@@ -349,7 +357,7 @@ function buildMC(){
     mc.appendChild(btn);
   });
 
-  // atalhos do teclado
+  // keyboard shortcuts
   window.onkeydown = (e)=>{
     const k = e.key.toUpperCase();
     const pos = letters.indexOf(k);
@@ -361,23 +369,16 @@ function buildMC(){
 }
 
 function chooseMC(btn){
-  $("#answer").addEventListener("focus", ()=> $("#answerZone").classList.add("stop-pulse"));
-
-  const correct = btn.getAttribute("data-correct")==="1";
+  $("#answerZone").classList.add("stop-pulse");
   [...document.querySelectorAll(".choice")].forEach(b=>b.classList.remove("correct","wrong"));
-  if(correct){
-    btn.classList.add("correct");
-    onCorrect();
-  } else {
-    btn.classList.add("wrong");
-    onWrong();
-  }
+  const correct = btn.getAttribute("data-correct")==="1";
+  if(correct){ btn.classList.add("correct"); onCorrect(); }
+  else{ btn.classList.add("wrong"); onWrong(); }
 }
-
 
 function giveHint(){
   const m=target.m;
-  $("#hintArea").textContent = (m<=30)? t("hintPast") : t("hintTo");
+  $("#hintArea").textContent = (m<=30)? TXT.hintPast : TXT.hintTo;
 }
 
 function startChallenge(){
@@ -388,7 +389,7 @@ function startChallenge(){
 }
 function endChallenge(){
   clearInterval(timer); timer=null;
-  flash(`${t("reportTitle")}: ${score} pts`);
+  flash(`${TXT.reportTitle}: ${score} pts`);
   saveHighscore(score);
   $("#report").innerHTML = renderHighscores();
 }
@@ -407,17 +408,16 @@ function saveHighscore(s){
 function renderHighscores(){
   const key="cq_scores";
   const arr = JSON.parse(localStorage.getItem(key)||"[]");
-  if(!arr.length) return "<em>Sem placares ainda.</em>";
+  if(!arr.length) return "<em>No highscores yet.</em>";
   return "<ol>"+arr.map(x=>`<li>${x.name}: <strong>${x.score}</strong></li>`).join("")+"</ol>";
 }
 
-/* ===== Drag hands mode (simple) ===== */
-let dragMode=false, dragHand=null;
+/* ===== Drag mode (simple minute-hand drag) ===== */
 $("#clock").addEventListener("mousedown", e=>{ if(!dragMode) return;
   const rect = e.target.getBoundingClientRect();
   const x = e.clientX-rect.left-rect.width/2;
   const y = e.clientY-rect.top-rect.height/2;
-  const a = Math.atan2(y,x); // choose minute by distance?
+  const a = Math.atan2(y,x);
   dragHand = "minute"; setMinuteFromAngle(a);
 });
 $("#clock").addEventListener("mousemove", e=>{
@@ -430,44 +430,33 @@ $("#clock").addEventListener("mousemove", e=>{
 });
 window.addEventListener("mouseup", ()=> dragHand=null);
 
-let currentShown={h:3,m:15};
 function setMinuteFromAngle(a){
+  // convert angle to minutes, considering top=12
   let deg = a*180/Math.PI; deg=(deg+90+360)%360; // 0 at top
   const m = Math.round(deg/6)%60;
   currentShown.m=m;
   drawClock(currentShown.h,currentShown.m);
 }
-function setHourFromTarget(){ currentShown.h=target.h; drawClock(currentShown.h,currentShown.m); } // simple for MVP
+function setHourFromTarget(){ currentShown.h=target.h; drawClock(currentShown.h,currentShown.m); }
 
 /* ===== UI Wiring ===== */
-function setLang(l){
-  LANG=l; localStorage.setItem("cq_lang",l);
-  $("#lblMode").textContent=t("mode");
-  $("#lblLevel").textContent=t("level");
-  $("#lblScore").textContent=t("score");
-  $("#lblTime").textContent=t("time");
-  $("#lblLives").textContent=t("lives");
-  $("#prompt").textContent=t("clickGenerate");
-  $("#lblReport").textContent=t("reportTitle");
-}
-$("#lang").value=LANG; setLang(LANG);
-$("#lang").addEventListener("change", e=>{ setLang(e.target.value); });
-
 $("#btnNew").addEventListener("click", generateTime);
 $("#btnHint").addEventListener("click", giveHint);
 $("#btnShowNums").addEventListener("click", ()=>{
   showMinuteNums=!showMinuteNums;
-  $("#btnShowNums").textContent = showMinuteNums ? t("showNumsOn") : t("showNumsOff");
+  $("#btnShowNums").textContent = showMinuteNums ? TXT.showNumsOn : TXT.showNumsOff;
   drawClock(target.h,target.m);
 });
 $("#btnSetAsk").addEventListener("click", ()=>{
-  askByDrag=true; dragMode=true; $("#dragInfo").hidden=false; $("#dragInfo").textContent=t("askAdjust"); setHourFromTarget();
+  dragMode=true; $("#dragInfo").hidden=false; $("#dragInfo").textContent=TXT.askAdjust; setHourFromTarget();
 });
-$("#btnMC").addEventListener("click", ()=>{ $("#mc").hidden=false; $("#typing").hidden=true; });
-$("#btnTyping").addEventListener("click", ()=>{ $("#mc").hidden=true; $("#typing").hidden=false; $("#answer").focus(); });
-$("#btnDrag").addEventListener("click", ()=>{ askByDrag=true; dragMode=true; $("#dragInfo").hidden=false; $("#dragInfo").textContent=t("dragOn"); });
+$("#btnMC").addEventListener("click", ()=>{ $("#mc").hidden=false; $("#typing").hidden=true; $("#kbdHint").hidden=false; });
+$("#btnTyping").addEventListener("click", ()=>{ $("#mc").hidden=true; $("#typing").hidden=false; $("#kbdHint").hidden=true; $("#answer").focus(); $("#answerZone").classList.remove("stop-pulse"); });
+$("#btnDrag").addEventListener("click", ()=>{ dragMode=true; $("#dragInfo").hidden=false; $("#dragInfo").textContent=TXT.dragOn; });
+
 $("#btnCheck").addEventListener("click", checkTextAnswer);
 $("#btnSkip").addEventListener("click", generateTime);
+$("#answer").addEventListener("focus", ()=> $("#answerZone").classList.add("stop-pulse"));
 
 $("#mode").addEventListener("change", e=>{
   mode=e.target.value;
@@ -475,7 +464,7 @@ $("#mode").addEventListener("change", e=>{
 });
 $("#level").addEventListener("change", e=>{ level=e.target.value; });
 
-$("#how").addEventListener("click", (e)=>{ e.preventDefault(); alert(t("howGh")); });
+$("#how").addEventListener("click", (e)=>{ e.preventDefault(); alert(TXT.howGh); });
 
 $("#toggle-contrast").addEventListener("click", (e)=>{
   const pressed = e.target.getAttribute("aria-pressed")==="true";
@@ -486,9 +475,9 @@ $("#toggle-contrast").addEventListener("click", (e)=>{
 
 /* Init */
 drawClock(target.h,target.m);
-$("#prompt").textContent=t("clickGenerate");
+$("#prompt").textContent=TXT.clickGenerate;
 $("#report").innerHTML = renderHighscores();
 </script>
 </body>
 </html>
-fix
+feat: EN-only UI + highlighted Answer Zone
