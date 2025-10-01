@@ -5,6 +5,63 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ClockQuest — Ler as horas (PT/EN)</title>
 <style>
+  /* Answer Zone */
+.answer-zone {
+  border: 2px solid #2f3b63;
+  border-radius: 14px;
+  padding: 14px;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  animation: zonePulse 2.5s ease-in-out infinite;
+}
+.answer-zone.stop-pulse { animation: none; }
+
+@keyframes zonePulse {
+  0%,100% { box-shadow: 0 0 0 rgba(111,255,233,0); }
+  50% { box-shadow: 0 0 0 8px rgba(111,255,233,0.08); }
+}
+
+#prompt {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.mc-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(1, minmax(0,1fr));
+}
+@media (min-width: 560px) { .mc-grid { grid-template-columns: repeat(3,1fr); } }
+
+.choice {
+  display: flex; align-items: center; gap: 10px;
+  border: 2px solid #2f3b63;
+  background: #0b1c3b;
+  padding: 14px 12px;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: .2px;
+  min-height: 56px;
+  text-align: left;
+}
+.choice:hover, .choice:focus { outline: 0; border-color: var(--accent2); filter: brightness(1.1); }
+.choice .badge-letter {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: grid; place-items: center;
+  background: var(--accent); color:#042a2b; font-weight: 900;
+}
+.choice.correct { border-color: var(--good); background: rgba(68,209,124,.12); }
+.choice.wrong   { border-color: var(--bad);  background: rgba(255,107,107,.12); }
+
+/* Typing mode field bigger */
+#typing input[type=text]{ font-size:1rem; width:100%; max-width:520px; }
+
+/* Small “press A/B/C” hint */
+.kbd-hint{opacity:.8;font-size:.9rem;margin-top:6px}
+.kbd {border:1px solid #2f3b63;border-bottom-width:3px;border-radius:6px;padding:2px 6px}
+
   :root{
     --bg:#0b132b; --panel:#1c2541; --accent:#5bc0be; --accent2:#6fffe9; --good:#44d17c; --bad:#ff6b6b; --txt:#eef2f7;
   }
@@ -42,10 +99,6 @@
   <div class="controls" role="group" aria-label="Configurações">
     <label class="pill">
       <span class="sr-only">Idioma</span>
-      <select id="lang">
-        <option value="pt">Português</option>
-        <option value="en">English</option>
-      </select>
     </label>
     <label class="pill">
       <span id="lblMode">Modo</span>
@@ -86,25 +139,37 @@
           <span class="badge"><span id="lblTime">Tempo</span>: <strong id="timer">—</strong></span>
           <span class="badge"><span id="lblLives">Vidas</span>: <strong id="lives">3</strong> <span class="heart">♥</span></span>
         </div>
-        <div class="card">
-          <p id="prompt">Clique em “Gerar hora”.</p>
-          <div class="controls">
-            <button id="btnMC">Múltipla escolha</button>
-            <button id="btnTyping">Digitar</button>
-            <button id="btnDrag">Arrastar ponteiros</button>
-          </div>
-          <div id="mc" class="controls" hidden></div>
-          <div id="typing" class="controls" hidden>
-            <input id="answer" type="text" placeholder="Ex.: a quarter past three / 3:15" size="28" />
-            <button id="btnCheck" class="good">Conferir</button>
-            <button id="btnSkip" class="bad">Pular</button>
-          </div>
-          <div id="dragInfo" class="hint" hidden></div>
-          <div class="hint" id="hintArea"></div>
-          <div>
-            <div class="progress" aria-label="Progresso de habilidade"><span id="pbar"></span></div>
-          </div>
-        </div>
+        <div class="card answer-zone" id="answerZone">
+  <p id="prompt">Click “Generate time”.</p>
+
+  <div class="controls" style="margin-bottom:8px">
+    <button id="btnMC" class="pill">Multiple choice</button>
+    <button id="btnTyping" class="pill">Typing</button>
+    <button id="btnDrag" class="pill">Drag hands</button>
+  </div>
+
+  <!-- Multiple choice -->
+  <div id="mc" class="mc-grid" hidden></div>
+  <div class="kbd-hint" id="kbdHint" hidden>
+    Tip: press <span class="kbd">A</span>, <span class="kbd">B</span> or <span class="kbd">C</span>
+  </div>
+
+  <!-- Typing -->
+  <div id="typing" class="" hidden>
+    <div class="controls">
+      <input id="answer" type="text" placeholder="Ex.: a quarter past three / 3:15" />
+      <button id="btnCheck" class="good">Check</button>
+      <button id="btnSkip" class="bad">Skip</button>
+    </div>
+  </div>
+
+  <div id="dragInfo" class="hint" hidden></div>
+  <div class="hint" id="hintArea"></div>
+
+  <div style="margin-top:8px">
+    <div class="progress" aria-label="Skill progress"><span id="pbar"></span></div>
+  </div>
+</div>
         <div class="card">
           <h3 id="lblReport">Relatório</h3>
           <div id="report"></div>
@@ -255,85 +320,60 @@ function generateTime(){
   target={h,m};
   drawClock(h,m);
   attempt=0;
-  $("#prompt").textContent = t("newTime");
+  $("#prompt").textContent = TXT.newTime;
+
   $("#hintArea").textContent = "";
   buildMC();
+function buildMC(){
+  const correct = toEnglish(target.h,target.m);
+  const set = new Set([correct]);
+  while(set.size<3){
+    let h = randInt(1,12);
+    let m = (level==="hard") ? randInt(0,59) : [0,5,10,15,20,25,30,35,40,45,50,55][randInt(0,11)];
+    set.add(toEnglish(h,m));
+  }
+  const opts = Array.from(set).sort(()=>Math.random()-0.5);
+  const letters = ["A","B","C"];
+  const mc = $("#mc"); mc.innerHTML=""; mc.hidden=false;
+  $("#typing").hidden = true;
+  $("#kbdHint").hidden = false;
+  $("#answerZone").classList.remove("stop-pulse");
+
+  opts.forEach((text, idx)=>{
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.setAttribute("data-letter", letters[idx]);
+    btn.setAttribute("data-correct", text===correct ? "1" : "0");
+    btn.innerHTML = `<span class="badge-letter">${letters[idx]}</span><span>${text}</span>`;
+    btn.addEventListener("click", ()=> chooseMC(btn));
+    mc.appendChild(btn);
+  });
+
+  // atalhos do teclado
+  window.onkeydown = (e)=>{
+    const k = e.key.toUpperCase();
+    const pos = letters.indexOf(k);
+    if(pos>-1){
+      const btn = mc.children[pos];
+      if(btn) chooseMC(btn);
+    }
+  };
 }
 
-function englishAcceptList(h,m){
-  const list = [];
-  list.push(toEnglish(h,m));
-  list.push(`${((h%12)||12)}:${pad2(m)}`);
-  if(m===0) list.push(`${((h%12)||12)} oclock`, `${((h%12)||12)} o’clock`);
-  return list.map(s=>s.toLowerCase());
-}
-function portugueseAcceptList(h,m){
-  return [toPortuguese(h,m), `${((h%12)||12)}:${pad2(m)}`, `${((h%12)||12)}h${m}`.toLowerCase()];
-}
+function chooseMC(btn){
+  $("#answer").addEventListener("focus", ()=> $("#answerZone").classList.add("stop-pulse"));
 
-function checkTextAnswer(){
-  const val = $("#answer").value.trim().toLowerCase();
-  const en = englishAcceptList(target.h,target.m);
-  const pt = portugueseAcceptList(target.h,target.m);
-  attempt++;
-  const correctEN = en.includes(val);
-  const correctPT = pt.includes(val);
-  if(correctEN){
+  const correct = btn.getAttribute("data-correct")==="1";
+  [...document.querySelectorAll(".choice")].forEach(b=>b.classList.remove("correct","wrong"));
+  if(correct){
+    btn.classList.add("correct");
     onCorrect();
-  } else if(correctPT){
-    flash(t("ptOkTryEn"));
-  } else if(similar(val, en)){
-    flash(t("near"));
   } else {
+    btn.classList.add("wrong");
     onWrong();
   }
 }
-function similar(val, list){
-  return list.some(x=>lev(val,x)<=2);
-}
-function lev(a,b){
-  const m=[]; for(let i=0;i<=b.length;i++){m[i]=[i]} for(let j=0;j<=a.length;j++){m[0][j]=j}
-  for(let i=1;i<=b.length;i++){for(let j=1;j<=a.length;j++){
-    m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(b[i-1]==a[j-1]?0:1));
-  }}
-  return m[b.length][a.length];
-}
 
-function onCorrect(){
-  score+=10+(attempt===1?5:0);
-  $("#score").textContent=score;
-  flash(t("correct"));
-  progress(10);
-  if(mode==="challenge") generateTime();
-}
-function onWrong(){
-  if(++attempt>=3){
-    // auto hint
-    giveHint();
-  }
-  lives--; $("#lives").textContent=lives;
-  flash(t("wrong"));
-  if(mode==="challenge" && lives<=0) endChallenge();
-}
-
-function buildMC(){
-  const en = englishAcceptList(target.h,target.m)[0];
-  const opts = new Set([en]);
-  while(opts.size<3){
-    let h = randInt(1,12), m = level==="hard"?randInt(0,59):[0,5,10,15,20,25,30,35,40,45,50,55][randInt(0,11)];
-    opts.add(toEnglish(h,m));
-  }
-  const arr = Array.from(opts).sort(()=>Math.random()-0.5);
-  const mc = $("#mc"); mc.innerHTML="";
-  arr.forEach(text=>{
-    const b = document.createElement("button"); b.textContent=text;
-    b.addEventListener("click",()=> {
-      $("#answer").value=text;
-      checkTextAnswer();
-    });
-    mc.appendChild(b);
-  });
-}
 
 function giveHint(){
   const m=target.m;
