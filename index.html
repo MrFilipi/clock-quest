@@ -190,13 +190,15 @@ function drawClock(h=3,m=15){
   // numbers 1-12
   ctx.fillStyle="#e6f6ff"; ctx.font="22px system-ui";
   for(let n=1;n<=12;n++){
-    const ang = n*Math.PI/6;
-    ctx.fillText(String(n), Math.cos(ang)*(r-52)-8, Math.sin(ang)*(r-52)+8);
-  }
+  const ang = (n * Math.PI / 6) - Math.PI/2; // agora começa no topo
+  ctx.fillText(String(n), Math.cos(ang)*(r-52)-8, Math.sin(ang)*(r-52)+8);
+}
+
 
   // hands
-  const mh = (m/60)*Math.PI*2;
-  const hh = ((h%12)/12 + m/720)*Math.PI*2;
+ const mh = (m/60)*Math.PI*2 - Math.PI/2;
+const hh = ((h%12)/12 + m/720)*Math.PI*2 - Math.PI/2;
+
   // hour hand
   ctx.strokeStyle="#6fffe9"; ctx.lineWidth=8; ctx.lineCap="round";
   ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(hh)*(r*0.5), Math.sin(hh)*(r*0.5)); ctx.stroke();
