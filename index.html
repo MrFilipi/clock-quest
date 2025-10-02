@@ -5,67 +5,63 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ClockQuest — Learn to read analog time</title>
 <meta name="color-scheme" content="light only">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  /* ===== Maple Bear palette (light) ===== */
   :root{
-    --bg:#ffffff;
-    --panel:#f6f6f6;
-    --ink:#111111;
-    --red:#c1121f;   /* Maple red */
-    --red-2:#a50f1a;
-    --accent:#c1121f;
-    --accent2:#ff4d5a;
-    --good:#1f7a3f;
-    --bad:#cc2936;
-    --muted:#6b6f76;
-    --shadow:0 10px 30px rgba(0,0,0,.10);
+    --bg:#ffffff; --panel:#f6f6f6; --ink:#111111;
+    --red:#c1121f; --good:#1f7a3f; --bad:#cc2936; --muted:#6b6f76; --shadow:0 10px 30px rgba(0,0,0,.10);
+    /* ESCALA do relógio “O” em relação à letra (ajuste aqui se quiser ainda maior) */
+    --o-scale: 1.35;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial}
-  button,select,input{font-family:inherit}
-  a{color:var(--accent);text-decoration:underline}
-
-  /* Generic UI */
+  a{color:var(--red)}
   .wrap{max-width:1024px;margin:auto;padding:16px}
   .card{background:var(--panel);border:2px solid #11111120;border-radius:14px;padding:16px;box-shadow:var(--shadow)}
   .controls,.status{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .pill{padding:8px 12px;border-radius:999px;border:2px solid #11111125;background:#fff}
-  button{border:2px solid #111111; background:#fff; color:var(--ink); padding:10px 14px; border-radius:12px; font-weight:700}
+  button{border:2px solid #111111;background:#fff;color:var(--ink);padding:10px 14px;border-radius:12px;font-weight:700}
   button:hover{transform:translateY(-1px)}
-  button.primary{background:var(--red); color:#fff; border-color:#000}
-  button.good{background:var(--good); color:#fff; border-color:#000}
-  button.bad{background:var(--bad); color:#fff; border-color:#000}
+  button.primary{background:var(--red);color:#fff;border-color:#000}
+  button.good{background:var(--good);color:#fff;border-color:#000}
+  button.bad{background:var(--bad);color:#fff;border-color:#000}
   select,input[type=text]{border:2px solid #11111150;background:#fff;color:var(--ink);padding:10px 12px;border-radius:10px}
   .badge{border:2px solid #11111190;padding:6px 10px;border-radius:10px;background:#fff}
   .progress{height:10px;background:#fff;border:2px solid #11111150;border-radius:8px;overflow:hidden}
   .progress>span{display:block;height:100%;background:var(--red);width:0%}
-
-  /* Layout */
   header{padding:16px;border-bottom:3px solid #000;background:#fff;position:sticky;top:0;z-index:2}
   header .brand{font-weight:900;letter-spacing:.5px}
   main{padding:16px}
   footer{padding:24px;border-top:3px solid #000;text-align:center;color:var(--muted)}
 
-  /* Intro screen */
+  /* ===== Intro ===== */
   .intro{display:grid;place-items:center;min-height:70svh}
-  .title{display:flex;align-items:center;gap:8px;user-select:none}
-  .title .word{font-weight:900;font-size:clamp(28px,6vw,64px);letter-spacing:1px;text-transform:uppercase}
-  .title .pixel{letter-spacing:2px;text-shadow:2px 2px 0 #000}
-  .title .clockO{display:inline-grid;place-items:center;border:3px solid #000;border-radius:50%;width:1.1em;height:1.1em;background:#fff;box-shadow:3px 3px 0 #000}
-  .subtitle{margin-top:6px;color:#333}
+  .title{display:flex;align-items:center;gap:10px;user-select:none}
+  /* Limitei o tamanho e deixei mais proporcional ao container */
+  .title .word{
+    font-weight:900; line-height:1;
+    font-size:clamp(28px, 7vw, 72px);   /* <= aqui reduz o exagero do print */
+    letter-spacing:1px; text-transform:uppercase;
+  }
+  .title .pixel{font-family:"Press Start 2P", system-ui, sans-serif; letter-spacing:2px}
+  /* “O” — mesmo CAP HEIGHT da letra com escala extra */
+  .title .clockO{
+    display:inline-grid; place-items:center; vertical-align:middle;
+    border:4px solid #000; border-radius:50%; background:#fff; box-shadow:4px 4px 0 #0001;
+    width: calc(1em * var(--o-scale)); height: calc(1em * var(--o-scale));
+  }
+  .subtitle{margin-top:8px;color:#333}
   .intro-panel{display:grid;gap:14px;margin-top:18px}
   .mode-grid{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr))}
   @media (max-width:700px){.mode-grid{grid-template-columns:1fr}}
-
   .name-row{display:flex;gap:8px;flex-wrap:wrap}
   .name-row input{min-width:240px}
 
-  /* Game layout */
+  /* ===== Game ===== */
   .grid{display:grid;gap:16px;grid-template-columns:1.3fr .9fr}
   @media (max-width:1000px){.grid{grid-template-columns:1fr}}
   canvas.clock{width:100%;height:auto;aspect-ratio:1/1;background:#fff;border-radius:50%;border:3px solid #000}
 
-  /* Answer Zone highlight */
   .answer-zone{border:3px solid #000;border-radius:14px;padding:16px;background:#fff;position:relative;box-shadow:var(--shadow);animation:az 2.5s ease-in-out infinite}
   .answer-zone.stop{animation:none}
   @keyframes az{0%,100%{box-shadow:0 0 0 rgba(193,18,31,0)}50%{box-shadow:0 0 0 10px rgba(193,18,31,.08)}}
@@ -79,15 +75,10 @@
   .choice.correct{background:#dff5e7;border-color:#000}
   .choice.wrong{background:#ffe3e6;border-color:#000}
 
-  /* Typing */
   #typing input{width:100%;max-width:520px}
-
-  /* Countdown overlay */
   .overlay{position:fixed;inset:0;background:rgba(255,255,255,.9);display:none;place-items:center;z-index:5}
   .overlay.show{display:grid}
-  .count{font-size:clamp(48px,10vw,120px);font-weight:900;color:#000;text-shadow:4px 4px 0 #0000}
-
-  /* Pixel-ish chips */
+  .count{font-size:clamp(48px,10vw,120px);font-weight:900;color:#000}
   .chip{background:#fff;border:3px solid #000;padding:4px 10px;border-radius:10px;font-weight:800}
 </style>
 </head>
@@ -104,16 +95,16 @@
   <section id="intro" class="intro">
     <div class="card" style="padding:24px; max-width:860px">
       <div class="title">
-        <div class="word pixel">Cl</div>
-        <canvas id="logoClock" width="90" height="90" class="clockO" aria-label="Clock O"></canvas>
-        <div class="word pixel">ckQuest</div>
+        <div class="word pixel">CL</div>
+        <canvas id="logoClock" class="clockO" aria-label="Clock O"></canvas>
+        <div class="word pixel">CKQUEST</div>
       </div>
       <div class="subtitle">Bora treinar como falar as horas em inglês — past / half / to — de um jeito divertido. 🎮</div>
 
       <div class="intro-panel">
         <div class="name-row">
           <label for="playerName" class="chip">Player name</label>
-          <input id="playerName" type="text" placeholder="Ex.: Mr. Filipi" />
+          <input id="playerName" type="text" placeholder="Ex.: Mr. Meia" />
           <button id="saveName" class="primary">Save</button>
         </div>
 
@@ -139,7 +130,6 @@
   <!-- ===== GAME PAGE ===== -->
   <section id="game" style="display:none">
     <div class="grid">
-      <!-- Left: clock and actions -->
       <div class="card">
         <canvas id="clock" class="clock" width="600" height="600" aria-label="Analog clock"></canvas>
         <div class="controls" style="margin-top:10px">
@@ -150,7 +140,6 @@
         </div>
       </div>
 
-      <!-- Right: status + answers + report -->
       <div class="card">
         <div class="status" style="margin-bottom:10px">
           <span class="badge">Mode: <strong id="modeLabel">Practice</strong></span>
@@ -166,21 +155,17 @@
           <span class="badge">Lives: <strong id="lives">3</strong> ♥</span>
         </div>
 
-        <!-- ANSWER ZONE -->
         <div class="answer-zone" id="answerZone">
           <p id="prompt">Click “Generate time”.</p>
-
           <div class="controls" style="margin-bottom:8px">
             <button id="btnMC" class="pill">Multiple choice</button>
             <button id="btnTyping" class="pill">Typing</button>
             <button id="btnDrag" class="pill">Drag hands</button>
           </div>
-
           <div id="mc" class="mc-grid" hidden></div>
           <div class="kbd-hint" id="kbdHint" hidden>
             Tip: press <span class="chip">A</span>, <span class="chip">B</span> or <span class="chip">C</span>
           </div>
-
           <div id="typing" hidden>
             <div class="controls">
               <input id="answer" type="text" placeholder='e.g., "a quarter past three" or "3:15"' />
@@ -188,13 +173,9 @@
               <button id="btnSkip" class="bad">Skip</button>
             </div>
           </div>
-
           <div id="dragInfo" class="muted" style="color:#444" hidden></div>
           <div class="muted" id="hintArea" style="color:#444"></div>
-
-          <div style="margin-top:8px">
-            <div class="progress" aria-label="Skill progress"><span id="pbar"></span></div>
-          </div>
+          <div style="margin-top:8px"><div class="progress" aria-label="Skill progress"><span id="pbar"></span></div></div>
         </div>
 
         <div class="card" style="margin-top:12px">
@@ -202,7 +183,6 @@
           <div id="report"></div>
         </div>
 
-        <!-- Challenge control (start + countdown) -->
         <div id="challengePanel" class="card" style="margin-top:12px; display:none">
           <b>Challenge mode</b>
           <p style="margin:8px 0">When you’re ready, press <b>Start</b>. A countdown (3-2-1) will appear, then the timer begins.</p>
@@ -227,7 +207,6 @@
 </footer>
 
 <script>
-/* ===== Utilities ===== */
 const $ = s => document.querySelector(s);
 
 /* ===== Player name & navigation ===== */
@@ -235,7 +214,6 @@ const nameInput = $("#playerName");
 const saveNameBtn = $("#saveName");
 const playerBadge = $("#playerBadge");
 let PLAYER = localStorage.getItem("cq_name") || "";
-
 function setPlayerName(n){
   PLAYER = (n||"").trim() || "Player";
   localStorage.setItem("cq_name", PLAYER);
@@ -243,118 +221,108 @@ function setPlayerName(n){
   playerBadge.hidden = false;
 }
 if(PLAYER){ nameInput.value = PLAYER; setPlayerName(PLAYER); }
+saveNameBtn.addEventListener("click", ()=>{ setPlayerName(nameInput.value); const t=saveNameBtn.textContent; saveNameBtn.textContent="Saved!"; setTimeout(()=>saveNameBtn.textContent=t,900); });
 
-saveNameBtn.addEventListener("click", ()=>{
-  setPlayerName(nameInput.value);
-  flashIntroOK(saveNameBtn);
-});
-function flashIntroOK(btn){ const t=btn.textContent; btn.textContent="Saved!"; setTimeout(()=>btn.textContent=t,900); }
-
-/* ===== Intro → pick mode & level ===== */
+/* ===== Intro → Game ===== */
 const levelIntro = $("#levelIntro");
 let selectedMode = "practice";
 $("#goLearn").addEventListener("click", ()=> enterGame("learn"));
 $("#goPractice").addEventListener("click", ()=> enterGame("practice"));
 $("#goChallenge").addEventListener("click", ()=> enterGame("challenge"));
-
 function enterGame(mode){
-  if(!PLAYER){ setPlayerName("Player"); } // default if empty
+  if(!PLAYER){ setPlayerName("Player"); }
   selectedMode = mode;
   $("#intro").style.display="none";
   $("#game").style.display="block";
   $("#modeLabel").textContent = mode[0].toUpperCase()+mode.slice(1);
   $("#level").value = levelIntro.value;
-  // challenge panel only if challenge
   $("#challengePanel").style.display = (mode==="challenge" ? "block" : "none");
-  // reset status area
   resetSession();
 }
 
-/* ===== Logo clock (the 'O' live clock) ===== */
-const logoCtx = $("#logoClock").getContext("2d");
-function drawLogoClock(){
-  const c = $("#logoClock"); const w=c.width, h=c.height; const r=Math.min(w,h)/2-8;
-  logoCtx.clearRect(0,0,w,h);
-  logoCtx.save(); logoCtx.translate(w/2,h/2);
-  // face
-  logoCtx.fillStyle="#fff"; logoCtx.beginPath(); logoCtx.arc(0,0,r+6,0,Math.PI*2); logoCtx.fill();
-  logoCtx.lineWidth=3; logoCtx.strokeStyle="#000"; logoCtx.stroke();
-  // numbers 12/3/6/9 dots
-  for(let i=0;i<12;i++){
-    const ang = i*Math.PI/6 - Math.PI/2;
-    logoCtx.fillStyle = (i%3===0) ? "#000" : "#0008";
-    logoCtx.beginPath();
-    logoCtx.arc(Math.cos(ang)*(r-6), Math.sin(ang)*(r-6), (i%3===0)?3:2, 0, Math.PI*2);
-    logoCtx.fill();
+/* ===== Logo clock 'O' — nítido e grande ===== */
+const logoCanvas = $("#logoClock");
+const logoCtx = logoCanvas.getContext("2d");
+function ensureLogoCanvasSize(){
+  // usa tamanho CSS (em) e ajusta a resolução do canvas
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const rect = logoCanvas.getBoundingClientRect();
+  const w = Math.max(64, Math.round(rect.width * dpr));
+  const h = Math.max(64, Math.round(rect.height * dpr));
+  if(logoCanvas.width !== w || logoCanvas.height !== h){
+    logoCanvas.width = w; logoCanvas.height = h;
   }
-  // time now
-  const now=new Date();
-  const hnow=now.getHours(), mnow=now.getMinutes(), snow=now.getSeconds();
-  const mh = (mnow/60)*Math.PI*2 - Math.PI/2;
-  const hh = ((hnow%12)/12 + mnow/720)*Math.PI*2 - Math.PI/2;
-  const sh = (snow/60)*Math.PI*2 - Math.PI/2;
-
-  // hands
+}
+function drawLogoClock(){
+  ensureLogoCanvasSize();
+  const w = logoCanvas.width, h = logoCanvas.height, dpr=Math.max(1, window.devicePixelRatio||1);
+  const cw = w/dpr, ch = h/dpr; // desenhar em unidades CSS
+  const r = Math.min(cw,ch)/2 - 6;
+  logoCtx.setTransform(dpr,0,0,dpr,0,0);
+  logoCtx.clearRect(0,0,cw,ch);
+  logoCtx.save(); logoCtx.translate(cw/2,ch/2);
+  // face
+  logoCtx.fillStyle="#fff"; logoCtx.beginPath(); logoCtx.arc(0,0,r+4,0,Math.PI*2); logoCtx.fill();
+  logoCtx.lineWidth=3; logoCtx.strokeStyle="#000"; logoCtx.stroke();
+  // dots
+  for(let i=0;i<12;i++){
+    const ang=i*Math.PI/6 - Math.PI/2;
+    logoCtx.fillStyle=(i%3===0)?"#000":"#0008";
+    logoCtx.beginPath(); logoCtx.arc(Math.cos(ang)*(r-6), Math.sin(ang)*(r-6), (i%3===0)?3:2, 0, Math.PI*2); logoCtx.fill();
+  }
+  const now=new Date(); const hhAng=((now.getHours()%12)/12 + now.getMinutes()/720)*Math.PI*2 - Math.PI/2;
+  const mhAng=(now.getMinutes()/60)*Math.PI*2 - Math.PI/2;
+  const shAng=(now.getSeconds()/60)*Math.PI*2 - Math.PI/2;
   logoCtx.strokeStyle="#000"; logoCtx.lineCap="round";
-  logoCtx.lineWidth=4; logoCtx.beginPath(); logoCtx.moveTo(0,0); logoCtx.lineTo(Math.cos(hh)*(r*0.45), Math.sin(hh)*(r*0.45)); logoCtx.stroke();
-  logoCtx.lineWidth=3; logoCtx.beginPath(); logoCtx.moveTo(0,0); logoCtx.lineTo(Math.cos(mh)*(r*0.70), Math.sin(mh)*(r*0.70)); logoCtx.stroke();
-  logoCtx.strokeStyle="#c1121f"; logoCtx.lineWidth=2; logoCtx.beginPath(); logoCtx.moveTo(0,0); logoCtx.lineTo(Math.cos(sh)*(r*0.78), Math.sin(sh)*(r*0.78)); logoCtx.stroke();
-  // center
+  logoCtx.lineWidth=4; logoCtx.beginPath(); logoCtx.moveTo(0,0); logoCtx.lineTo(Math.cos(hhAng)*(r*0.45), Math.sin(hhAng)*(r*0.45)); logoCtx.stroke();
+  logoCtx.lineWidth=3; logoCtx.beginPath(); logoCtx.moveTo(0,0); logoCtx.lineTo(Math.cos(mhAng)*(r*0.70), Math.sin(mhAng)*(r*0.70)); logoCtx.stroke();
+  logoCtx.strokeStyle="#c1121f"; logoCtx.lineWidth=2; logoCtx.beginPath(); logoCtx.moveTo(0,0); logoCtx.lineTo(Math.cos(shAng)*(r*0.78), Math.sin(shAng)*(r*0.78)); logoCtx.stroke();
   logoCtx.fillStyle="#000"; logoCtx.beginPath(); logoCtx.arc(0,0,3,0,Math.PI*2); logoCtx.fill();
   logoCtx.restore();
 }
 drawLogoClock(); setInterval(drawLogoClock, 1000);
 
-/* ===== GAME: drawing & logic ===== */
+/* ===== Game drawing ===== */
 const ctx = $("#clock").getContext("2d");
 let showMinuteNums=false;
 function drawClock(h=3,m=15){
   const c=$("#clock"); const w=c.width,hgt=c.height; const r=Math.min(w,hgt)/2-18;
   ctx.clearRect(0,0,w,hgt);
   ctx.save(); ctx.translate(w/2,hgt/2);
-  // face
   ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(0,0,r+10,0,Math.PI*2); ctx.fill();
   ctx.lineWidth=3; ctx.strokeStyle="#000"; ctx.stroke();
-  // ticks
   for(let i=0;i<60;i++){
-    const ang = i*Math.PI/30 - Math.PI/2;
-    const len = (i%5===0)?14:6;
+    const ang=i*Math.PI/30 - Math.PI/2;
+    const len=(i%5===0)?14:6;
     ctx.beginPath();
     ctx.moveTo(Math.cos(ang)*(r-len), Math.sin(ang)*(r-len));
     ctx.lineTo(Math.cos(ang)*(r-2), Math.sin(ang)*(r-2));
-    ctx.lineWidth=(i%5===0)?3:2;
-    ctx.strokeStyle="#000"; ctx.stroke();
+    ctx.lineWidth=(i%5===0)?3:2; ctx.strokeStyle="#000"; ctx.stroke();
     if(showMinuteNums && i%5===0){
       ctx.fillStyle="#000"; ctx.font="14px system-ui";
-      const label = (i===0?60:i);
+      const label=(i===0?60:i);
       ctx.fillText(String(label), Math.cos(ang)*(r-34)-6, Math.sin(ang)*(r-34)+5);
     }
   }
-  // numbers
   ctx.fillStyle="#000"; ctx.font="22px system-ui";
   for(let n=1;n<=12;n++){
-    const ang = (n*Math.PI/6) - Math.PI/2;
+    const ang=(n*Math.PI/6) - Math.PI/2;
     ctx.fillText(String(n), Math.cos(ang)*(r-52)-8, Math.sin(ang)*(r-52)+8);
   }
-  // hands
-  const mh = (m/60)*Math.PI*2 - Math.PI/2;
-  const hh = ((h%12)/12 + m/720)*Math.PI*2 - Math.PI/2;
+  const mh=(m/60)*Math.PI*2 - Math.PI/2;
+  const hh=((h%12)/12 + m/720)*Math.PI*2 - Math.PI/2;
   ctx.strokeStyle="#000"; ctx.lineWidth=6; ctx.lineCap="round";
   ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(hh)*(r*0.5), Math.sin(hh)*(r*0.5)); ctx.stroke();
   ctx.strokeStyle="#c1121f"; ctx.lineWidth=5;
   ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(mh)*(r*0.75), Math.sin(mh)*(r*0.75)); ctx.stroke();
-  // center
   ctx.fillStyle="#000"; ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill();
   ctx.restore();
 }
 
-/* Time helpers */
+/* ===== Helpers & game logic ===== */
 function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function pad2(n){return (n<10?'0':'')+n;}
-const words = {1:"one",2:"two",3:"three",4:"four",5:"five",6:"six",7:"seven",8:"eight",9:"nine",10:"ten",11:"eleven",12:"twelve",
-  13:"thirteen",14:"fourteen",15:"fifteen",16:"sixteen",17:"seventeen",18:"eighteen",19:"nineteen",
-  20:"twenty",21:"twenty one",22:"twenty two",23:"twenty three",24:"twenty four",25:"twenty five",
-  26:"twenty six",27:"twenty seven",28:"twenty eight",29:"twenty nine"};
+const words={1:"one",2:"two",3:"three",4:"four",5:"five",6:"six",7:"seven",8:"eight",9:"nine",10:"ten",11:"eleven",12:"twelve",13:"thirteen",14:"fourteen",15:"fifteen",16:"sixteen",17:"seventeen",18:"eighteen",19:"nineteen",20:"twenty",21:"twenty one",22:"twenty two",23:"twenty three",24:"twenty four",25:"twenty five",26:"twenty six",27:"twenty seven",28:"twenty eight",29:"twenty nine"};
 function toEnglish(h,m){
   const h12=((h%12)||12), next=((h+1)%12)||12;
   if(m===0) return `${words[h12]} o’clock`;
@@ -365,37 +333,32 @@ function toEnglish(h,m){
   const remain=60-m; return `${words[remain]} to ${words[next]}`;
 }
 
-/* Game state */
-let target={h:3,m:15}, mode="practice", level="medium";
+let target={h:3,m:15}, level="medium";
 let score=0,lives=3,timer=null,seconds=0,attempt=0;
-let dragMode=false,dragHand=null; let currentShown={h:3,m:15};
+let dragMode=false,dragHand=null;
+let currentShown={h:3,m:15};
 
 function levelMinutes(){
   if(level==="easy") return [0,5,10,15,20,25,30,35,40,45,50,55].filter(x=>x<=40?true:[0,5,10,15,20,25,30].includes(x));
   if(level==="medium") return [0,5,10,15,20,25,30,35,40,45,50,55];
   return Array.from({length:60},(_,i)=>i);
 }
-
 function resetSession(){
   score=0; lives=3; attempt=0; seconds=0;
   $("#score").textContent=score; $("#lives").textContent=lives; $("#timer").textContent="—";
-  $("#modeLabel").textContent = modeTitle();
+  $("#modeLabel").textContent = selectedMode[0].toUpperCase()+selectedMode.slice(1);
   $("#answerZone").classList.remove("stop");
   $("#report").innerHTML = renderHighscores();
   drawClock(target.h,target.m);
   if(selectedMode==="challenge"){ $("#timer").textContent="Ready"; }
 }
-function modeTitle(){ return selectedMode[0].toUpperCase()+selectedMode.slice(1); }
-
 function generateTime(){
   const mins=levelMinutes(); const m=mins[randInt(0,mins.length-1)];
   const h=randInt(1,12);
   target={h,m}; drawClock(h,m); attempt=0;
-  $("#prompt").textContent="New time!";
-  $("#hintArea").textContent="";
+  $("#prompt").textContent="New time!"; $("#hintArea").textContent="";
   buildMC();
 }
-
 function englishAcceptList(h,m){
   const list=[toEnglish(h,m), `${((h%12)||12)}:${pad2(m)}`];
   if(m===0) list.push(`${((h%12)||12)} oclock`, `${((h%12)||12)} o’clock`);
@@ -413,35 +376,29 @@ function similar(val,list){ return list.some(x=>lev(val,x)<=2); }
 function lev(a,b){ const m=[]; for(let i=0;i<=b.length;i++){m[i]=[i]} for(let j=0;j<=a.length;j++){m[0][j]=j}
   for(let i=1;i<=b.length;i++){for(let j=1;j<=a.length;j++){m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(b[i-1]==a[j-1]?0:1))}}
   return m[b.length][a.length]; }
-
 function onCorrect(){
   score+=10+(attempt===1?5:0);
-  $("#score").textContent=score;
-  flash("Correct! +10");
-  progress(10);
+  $("#score").textContent=score; flash("Correct! +10"); progress(10);
   $("#answerZone").classList.add("stop");
   if(selectedMode==="challenge") generateTime();
 }
 function onWrong(){
   if(++attempt>=3){ giveHint(); }
-  lives--; $("#lives").textContent=lives;
-  flash("Oops! Compare the hands.");
+  lives--; $("#lives").textContent=lives; flash("Oops! Compare the hands.");
   if(selectedMode==="challenge" && lives<=0) endChallenge();
 }
-function progress(p){ const el=$("#pbar"); const cur=parseInt(el.style.width||"0"); el.style.width = Math.min(100,cur+p)+"%"; }
+function progress(p){ const el=$("#pbar"); const cur=parseInt(el.style.width||"0"); el.style.width=Math.min(100,cur+p)+"%"; }
 function flash(msg){ $("#prompt").textContent=msg; }
 
-/* Multiple choice with A/B/C + keyboard */
 function buildMC(){
   const correct = toEnglish(target.h,target.m);
-  const set = new Set([correct]);
+  const set=new Set([correct]);
   while(set.size<3){
     let h=randInt(1,12), m=(level==="hard")?randInt(0,59):[0,5,10,15,20,25,30,35,40,45,50,55][randInt(0,11)];
     set.add(toEnglish(h,m));
   }
-  const opts = Array.from(set).sort(()=>Math.random()-0.5);
-  const letters=["A","B","C"];
-  const mc=$("#mc"); mc.innerHTML=""; mc.hidden=false;
+  const opts=Array.from(set).sort(()=>Math.random()-0.5);
+  const letters=["A","B","C"]; const mc=$("#mc"); mc.innerHTML=""; mc.hidden=false;
   $("#typing").hidden=true; $("#kbdHint").hidden=false; $("#answerZone").classList.remove("stop");
   opts.forEach((text,idx)=>{
     const btn=document.createElement("button");
@@ -459,31 +416,19 @@ function chooseMC(btn){
   const correct=btn.getAttribute("data-correct")==="1";
   if(correct){ btn.classList.add("correct"); onCorrect(); } else { btn.classList.add("wrong"); onWrong(); }
 }
-
-/* Hints */
 function giveHint(){
   const m=target.m;
   $("#hintArea").textContent = (m<=30) ? 'Use “past” for 1–29 and “half past” for :30.' : 'Use “to” when minutes remain to next hour (31–59).';
 }
 
-/* Challenge timing by level + countdown */
-function secondsForLevel(){
-  const v=$("#level").value;
-  if(v==="easy") return 180;
-  if(v==="medium") return 120;
-  return 90;
-}
+/* Challenge timing + countdown */
+function secondsForLevel(){ const v=$("#level").value; if(v==="easy") return 180; if(v==="medium") return 120; return 90; }
 const overlay=$("#overlay"), countdown=$("#countdown");
 $("#btnStartChallenge").addEventListener("click", ()=>{
-  // show 3-2-1, then start
   overlay.classList.add("show");
   let n=3; countdown.textContent=n;
-  const iv=setInterval(()=>{
-    n--; if(n<=0){ clearInterval(iv); overlay.classList.remove("show"); startChallenge(); }
-    else{ countdown.textContent=n; }
-  }, 800);
+  const iv=setInterval(()=>{ n--; if(n<=0){ clearInterval(iv); overlay.classList.remove("show"); startChallenge(); } else countdown.textContent=n; }, 800);
 });
-
 function startChallenge(){
   score=0; lives=3; seconds=secondsForLevel();
   $("#score").textContent=score; $("#lives").textContent=lives; $("#timer").textContent=seconds;
@@ -492,20 +437,15 @@ function startChallenge(){
   generateTime();
 }
 function endChallenge(){
-  clearInterval(timer); timer=null;
-  flash(`Report: ${score} pts`);
-  saveHighscore(score);
-  $("#report").innerHTML = renderHighscores();
+  clearInterval(timer); timer=null; flash(`Report: ${score} pts`);
+  saveHighscore(score); $("#report").innerHTML = renderHighscores();
 }
 
 /* Highscores */
 function saveHighscore(s){
-  const key="cq_scores";
-  const arr = JSON.parse(localStorage.getItem(key)||"[]");
-  const name = PLAYER||"Player";
-  arr.push({name,score:s,ts:Date.now()});
-  arr.sort((a,b)=>b.score-a.score);
-  localStorage.setItem(key, JSON.stringify(arr.slice(0,5)));
+  const key="cq_scores"; const arr=JSON.parse(localStorage.getItem(key)||"[]");
+  const name=PLAYER||"Player"; arr.push({name,score:s,ts:Date.now()});
+  arr.sort((a,b)=>b.score-a.score); localStorage.setItem(key, JSON.stringify(arr.slice(0,5)));
 }
 function renderHighscores(){
   const key="cq_scores"; const arr=JSON.parse(localStorage.getItem(key)||"[]");
@@ -524,22 +464,14 @@ $("#clock").addEventListener("mousemove", e=>{
   const a=Math.atan2(y,x); setMinuteFromAngle(a);
 });
 window.addEventListener("mouseup", ()=> dragHand=null);
-function setMinuteFromAngle(a){
-  let deg=a*180/Math.PI; deg=(deg+90+360)%360; const m=Math.round(deg/6)%60;
-  currentShown.m=m; drawClock(currentShown.h,currentShown.m);
-}
+function setMinuteFromAngle(a){ let deg=a*180/Math.PI; deg=(deg+90+360)%360; const m=Math.round(deg/6)%60; currentShown.m=m; drawClock(currentShown.h,currentShown.m); }
 function setHourFromTarget(){ currentShown.h=target.h; drawClock(currentShown.h,currentShown.m); }
 
 /* Wiring */
 $("#btnNew").addEventListener("click", generateTime);
 $("#btnHint").addEventListener("click", giveHint);
-$("#btnShowNums").addEventListener("click", ()=>{
-  showMinuteNums=!showMinuteNums; $("#btnShowNums").textContent = showMinuteNums ? "Hide minute numbers" : "Show minute numbers";
-  drawClock(target.h,target.m);
-});
-$("#btnSetAsk").addEventListener("click", ()=>{
-  dragMode=true; $("#dragInfo").hidden=false; $("#dragInfo").textContent="Drag the hands to your answer, then press Check."; setHourFromTarget();
-});
+$("#btnShowNums").addEventListener("click", ()=>{ showMinuteNums=!showMinuteNums; $("#btnShowNums").textContent = showMinuteNums ? "Hide minute numbers" : "Show minute numbers"; drawClock(target.h,target.m); });
+$("#btnSetAsk").addEventListener("click", ()=>{ dragMode=true; $("#dragInfo").hidden=false; $("#dragInfo").textContent="Drag the hands to your answer, then press Check."; setHourFromTarget(); });
 $("#btnMC").addEventListener("click", ()=>{ $("#mc").hidden=false; $("#typing").hidden=true; $("#kbdHint").hidden=false; });
 $("#btnTyping").addEventListener("click", ()=>{ $("#mc").hidden=true; $("#typing").hidden=false; $("#kbdHint").hidden=true; $("#answer").focus(); $("#answerZone").classList.remove("stop"); });
 $("#btnDrag").addEventListener("click", ()=>{ dragMode=true; $("#dragInfo").hidden=false; $("#dragInfo").textContent="Drag the hands to your answer, then press Check."; });
@@ -548,18 +480,15 @@ $("#btnCheck").addEventListener("click", checkTextAnswer);
 $("#btnSkip").addEventListener("click", generateTime);
 $("#answer").addEventListener("focus", ()=> $("#answerZone").classList.add("stop"));
 
-$("#modeLabel").textContent = modeTitle();
 $("#level").addEventListener("change", e=>{ level=e.target.value; });
 $("#btnHome").addEventListener("click", ()=>{ $("#game").style.display="none"; $("#intro").style.display="grid"; });
 $("#btnBackHome").addEventListener("click", ()=>{ $("#game").style.display="none"; $("#intro").style.display="grid"; });
-
-/* “Learn / Practice / Challenge” toggles (internal) */
-document.getElementById("level").value = levelIntro.value;
 document.getElementById("how").addEventListener("click",(e)=>{e.preventDefault(); alert("GitHub Pages: 1) Create a repo and push this index.html. 2) Settings → Pages → Source: 'Deploy from a branch', branch main, /. 3) Open the published link.");});
 
-/* Init first draw */
+/* Init */
+drawLogoClock(); // atualiza a cada 1s
 drawClock(3,15);
 </script>
 </body>
 </html>
-Mr. Meia is proud of you!!!!
+Mr. Meia is really proud of you!!
