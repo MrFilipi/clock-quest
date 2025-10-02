@@ -6,12 +6,15 @@
 <title>ClockQuest — Learn to read analog time</title>
 <meta name="color-scheme" content="light only">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
+    /* Maple Bear vibe */
     --bg:#ffffff; --panel:#f6f6f6; --ink:#111111;
     --red:#c1121f; --good:#1f7a3f; --bad:#cc2936; --muted:#6b6f76; --shadow:0 10px 30px rgba(0,0,0,.10);
-    /* ESCALA do relógio “O” em relação à letra (ajuste aqui se quiser ainda maior) */
-    --o-scale: 1.35;
+    /* Tamanho do relógio “O” (ajuste aqui) */
+    --o-scale: 1.6;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial}
@@ -37,19 +40,30 @@
   /* ===== Intro ===== */
   .intro{display:grid;place-items:center;min-height:70svh}
   .title{display:flex;align-items:center;gap:10px;user-select:none}
-  /* Limitei o tamanho e deixei mais proporcional ao container */
-  .title .word{
-    font-weight:900; line-height:1;
-    font-size:clamp(28px, 7vw, 72px);   /* <= aqui reduz o exagero do print */
-    letter-spacing:1px; text-transform:uppercase;
-  }
+  .title .word{font-weight:900;line-height:1;font-size:clamp(28px, 7vw, 72px);letter-spacing:1px;text-transform:uppercase}
   .title .pixel{font-family:"Press Start 2P", system-ui, sans-serif; letter-spacing:2px}
-  /* “O” — mesmo CAP HEIGHT da letra com escala extra */
-  .title .clockO{
-    display:inline-grid; place-items:center; vertical-align:middle;
-    border:4px solid #000; border-radius:50%; background:#fff; box-shadow:4px 4px 0 #0001;
-    width: calc(1em * var(--o-scale)); height: calc(1em * var(--o-scale));
+  .clockO-img{
+    position: relative;
+    width: calc(1em * var(--o-scale));
+    height: calc(1em * var(--o-scale));
+    display: inline-block;
+    vertical-align: middle;
+    image-rendering: pixelated;
   }
+  .clockO-img img{
+    width: 100%; height: 100%; display: block;
+    border: 4px solid #000; border-radius: 50%; background:#fff;
+    box-shadow: 4px 4px 0 #0001;
+  }
+  .clockO-img .hand{
+    position:absolute; left:50%; top:50%;
+    transform-origin: 50% calc(100% - 8px);
+    background:#000; border-radius: 2px;
+  }
+  .clockO-img .hand.hour   { width:6px; height:35%; transform:translate(-50%,-100%) rotate(0deg); }
+  .clockO-img .hand.minute { width:4px; height:44%; transform:translate(-50%,-100%) rotate(0deg); background:#c1121f; }
+  .clockO-img .hand.second { width:2px; height:48%; transform:translate(-50%,-100%) rotate(0deg); background:#c1121f; opacity:.9 }
+
   .subtitle{margin-top:8px;color:#333}
   .intro-panel{display:grid;gap:14px;margin-top:18px}
   .mode-grid{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -96,7 +110,16 @@
     <div class="card" style="padding:24px; max-width:860px">
       <div class="title">
         <div class="word pixel">CL</div>
-        <canvas id="logoClock" class="clockO" aria-label="Clock O"></canvas>
+
+        <!-- O em IMAGEM com ponteiros -->
+        <div class="clockO-img" id="logoO" aria-label="Clock O">
+          <img id="logoOImg" src="assets/pixel-clock.png" alt="Pixel clock"
+               onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<?xml version=&quot;1.0&quot;?><svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot; shape-rendering=&quot;crispEdges&quot;><rect width=&quot;100&quot; height=&quot;100&quot; fill=&quot;white&quot;/><circle cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;46&quot; fill=&quot;white&quot; stroke=&quot;black&quot; stroke-width=&quot;6&quot;/><circle cx=&quot;50&quot; cy=&quot;20&quot; r=&quot;3&quot; fill=&quot;black&quot;/><circle cx=&quot;80&quot; cy=&quot;50&quot; r=&quot;3&quot; fill=&quot;black&quot;/><circle cx=&quot;50&quot; cy=&quot;80&quot; r=&quot;3&quot; fill=&quot;black&quot;/><circle cx=&quot;20&quot; cy=&quot;50&quot; r=&quot;3&quot; fill=&quot;black&quot;/></svg>';" />
+          <div class="hand hour"></div>
+          <div class="hand minute"></div>
+          <div class="hand second"></div>
+        </div>
+
         <div class="word pixel">CKQUEST</div>
       </div>
       <div class="subtitle">Bora treinar como falar as horas em inglês — past / half / to — de um jeito divertido. 🎮</div>
@@ -207,6 +230,37 @@
 </footer>
 
 <script>
+/* =============== Supabase SETUP =============== */
+/* 👉 SUBSTITUA pelos dados do seu projeto */
+const SB_URL = "https://YOUR-PROJECT.supabase.co";      // TODO
+const SB_ANON= "YOUR-ANON-PUBLIC-KEY";                  // TODO
+const supabase = window.supabase.createClient(SB_URL, SB_ANON);
+
+async function sbEnsureAuth(){
+  const { data: { user } } = await supabase.auth.getUser();
+  if(!user){ await supabase.auth.signInAnonymously(); }
+}
+async function sbEnsurePlayer(displayName){
+  await sbEnsureAuth();
+  const { data: existing } = await supabase.from('players').select('id').eq('display_name', displayName).limit(1);
+  if(existing && existing.length){ return existing[0].id; }
+  const { data: inserted, error } = await supabase.from('players').insert({ display_name: displayName }).select('id').single();
+  if(error){ console.error(error); return null; }
+  return inserted.id;
+}
+async function saveHighscoreRemote({playerId, playerName, score, mode, level}){
+  await sbEnsureAuth();
+  const { error } = await supabase.from('scores').insert({ player_id:playerId, player_name:playerName, score, mode, level });
+  if(error){ console.error("save score error:", error); }
+}
+async function loadLeaderboardRemote(limit=10){
+  const { data, error } = await supabase.from('scores').select('player_name, score, level, created_at').order('score',{ascending:false}).limit(limit);
+  if(error){ console.error(error); return []; }
+  return data;
+}
+/* ============================================= */
+
+/* ===== Helpers ===== */
 const $ = s => document.querySelector(s);
 
 /* ===== Player name & navigation ===== */
@@ -214,14 +268,21 @@ const nameInput = $("#playerName");
 const saveNameBtn = $("#saveName");
 const playerBadge = $("#playerBadge");
 let PLAYER = localStorage.getItem("cq_name") || "";
-function setPlayerName(n){
+let PLAYER_ID = null;
+
+async function setPlayerName(n){
   PLAYER = (n||"").trim() || "Player";
   localStorage.setItem("cq_name", PLAYER);
   playerBadge.textContent = "👤 " + PLAYER;
   playerBadge.hidden = false;
+  PLAYER_ID = await sbEnsurePlayer(PLAYER);
 }
-if(PLAYER){ nameInput.value = PLAYER; setPlayerName(PLAYER); }
-saveNameBtn.addEventListener("click", ()=>{ setPlayerName(nameInput.value); const t=saveNameBtn.textContent; saveNameBtn.textContent="Saved!"; setTimeout(()=>saveNameBtn.textContent=t,900); });
+if(PLAYER){ setPlayerName(PLAYER).then(()=>{ nameInput.value = PLAYER; }); }
+
+saveNameBtn.addEventListener("click", async ()=>{
+  await setPlayerName(nameInput.value);
+  const t=saveNameBtn.textContent; saveNameBtn.textContent="Saved!"; setTimeout(()=>saveNameBtn.textContent=t,900);
+});
 
 /* ===== Intro → Game ===== */
 const levelIntro = $("#levelIntro");
@@ -229,6 +290,7 @@ let selectedMode = "practice";
 $("#goLearn").addEventListener("click", ()=> enterGame("learn"));
 $("#goPractice").addEventListener("click", ()=> enterGame("practice"));
 $("#goChallenge").addEventListener("click", ()=> enterGame("challenge"));
+
 function enterGame(mode){
   if(!PLAYER){ setPlayerName("Player"); }
   selectedMode = mode;
@@ -240,47 +302,22 @@ function enterGame(mode){
   resetSession();
 }
 
-/* ===== Logo clock 'O' — nítido e grande ===== */
-const logoCanvas = $("#logoClock");
-const logoCtx = logoCanvas.getContext("2d");
-function ensureLogoCanvasSize(){
-  // usa tamanho CSS (em) e ajusta a resolução do canvas
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
-  const rect = logoCanvas.getBoundingClientRect();
-  const w = Math.max(64, Math.round(rect.width * dpr));
-  const h = Math.max(64, Math.round(rect.height * dpr));
-  if(logoCanvas.width !== w || logoCanvas.height !== h){
-    logoCanvas.width = w; logoCanvas.height = h;
+/* ===== O-clock (imagem) com ponteiros animados ===== */
+(function(){
+  const root = document.getElementById("logoO");
+  if(!root) return;
+  const h = root.querySelector(".hand.hour");
+  const m = root.querySelector(".hand.minute");
+  const s = root.querySelector(".hand.second");
+  function tick(){
+    const now=new Date();
+    const hh=now.getHours()%12, mm=now.getMinutes(), ss=now.getSeconds();
+    h.style.transform = `translate(-50%,-100%) rotate(${(hh+mm/60)*30}deg)`;
+    m.style.transform = `translate(-50%,-100%) rotate(${(mm+ss/60)*6}deg)`;
+    s.style.transform = `translate(-50%,-100%) rotate(${ss*6}deg)`;
   }
-}
-function drawLogoClock(){
-  ensureLogoCanvasSize();
-  const w = logoCanvas.width, h = logoCanvas.height, dpr=Math.max(1, window.devicePixelRatio||1);
-  const cw = w/dpr, ch = h/dpr; // desenhar em unidades CSS
-  const r = Math.min(cw,ch)/2 - 6;
-  logoCtx.setTransform(dpr,0,0,dpr,0,0);
-  logoCtx.clearRect(0,0,cw,ch);
-  logoCtx.save(); logoCtx.translate(cw/2,ch/2);
-  // face
-  logoCtx.fillStyle="#fff"; logoCtx.beginPath(); logoCtx.arc(0,0,r+4,0,Math.PI*2); logoCtx.fill();
-  logoCtx.lineWidth=3; logoCtx.strokeStyle="#000"; logoCtx.stroke();
-  // dots
-  for(let i=0;i<12;i++){
-    const ang=i*Math.PI/6 - Math.PI/2;
-    logoCtx.fillStyle=(i%3===0)?"#000":"#0008";
-    logoCtx.beginPath(); logoCtx.arc(Math.cos(ang)*(r-6), Math.sin(ang)*(r-6), (i%3===0)?3:2, 0, Math.PI*2); logoCtx.fill();
-  }
-  const now=new Date(); const hhAng=((now.getHours()%12)/12 + now.getMinutes()/720)*Math.PI*2 - Math.PI/2;
-  const mhAng=(now.getMinutes()/60)*Math.PI*2 - Math.PI/2;
-  const shAng=(now.getSeconds()/60)*Math.PI*2 - Math.PI/2;
-  logoCtx.strokeStyle="#000"; logoCtx.lineCap="round";
-  logoCtx.lineWidth=4; logoCtx.beginPath(); logoCtx.moveTo(0,0); logoCtx.lineTo(Math.cos(hhAng)*(r*0.45), Math.sin(hhAng)*(r*0.45)); logoCtx.stroke();
-  logoCtx.lineWidth=3; logoCtx.beginPath(); logoCtx.moveTo(0,0); logoCtx.lineTo(Math.cos(mhAng)*(r*0.70), Math.sin(mhAng)*(r*0.70)); logoCtx.stroke();
-  logoCtx.strokeStyle="#c1121f"; logoCtx.lineWidth=2; logoCtx.beginPath(); logoCtx.moveTo(0,0); logoCtx.lineTo(Math.cos(shAng)*(r*0.78), Math.sin(shAng)*(r*0.78)); logoCtx.stroke();
-  logoCtx.fillStyle="#000"; logoCtx.beginPath(); logoCtx.arc(0,0,3,0,Math.PI*2); logoCtx.fill();
-  logoCtx.restore();
-}
-drawLogoClock(); setInterval(drawLogoClock, 1000);
+  tick(); setInterval(tick,1000);
+})();
 
 /* ===== Game drawing ===== */
 const ctx = $("#clock").getContext("2d");
@@ -319,7 +356,7 @@ function drawClock(h=3,m=15){
   ctx.restore();
 }
 
-/* ===== Helpers & game logic ===== */
+/* Helpers & game logic */
 function randInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function pad2(n){return (n<10?'0':'')+n;}
 const words={1:"one",2:"two",3:"three",4:"four",5:"five",6:"six",7:"seven",8:"eight",9:"nine",10:"ten",11:"eleven",12:"twelve",13:"thirteen",14:"fourteen",15:"fifteen",16:"sixteen",17:"seventeen",18:"eighteen",19:"nineteen",20:"twenty",21:"twenty one",22:"twenty two",23:"twenty three",24:"twenty four",25:"twenty five",26:"twenty six",27:"twenty seven",28:"twenty eight",29:"twenty nine"};
@@ -332,7 +369,6 @@ function toEnglish(h,m){
   if(m===45) return `a quarter to ${words[next]}`;
   const remain=60-m; return `${words[remain]} to ${words[next]}`;
 }
-
 let target={h:3,m:15}, level="medium";
 let score=0,lives=3,timer=null,seconds=0,attempt=0;
 let dragMode=false,dragHand=null;
@@ -436,12 +472,28 @@ function startChallenge(){
   timer=setInterval(()=>{ seconds--; $("#timer").textContent=seconds; if(seconds<=0) endChallenge(); },1000);
   generateTime();
 }
-function endChallenge(){
-  clearInterval(timer); timer=null; flash(`Report: ${score} pts`);
-  saveHighscore(score); $("#report").innerHTML = renderHighscores();
+async function endChallenge(){
+  clearInterval(timer); timer=null;
+  flash(`Report: ${score} pts`);
+  saveHighscore(score); // local
+  try{
+    if(!PLAYER_ID){ PLAYER_ID = await sbEnsurePlayer(PLAYER||"Player"); }
+    await saveHighscoreRemote({
+      playerId: PLAYER_ID,
+      playerName: PLAYER||"Player",
+      score,
+      mode: 'challenge',
+      level: document.getElementById('level').value
+    });
+    const top = await loadLeaderboardRemote(5);
+    const html = top.length
+      ? "<ol>"+top.map(r=>`<li>${r.player_name}: <strong>${r.score}</strong> <small>(${r.level})</small></li>`).join("")+"</ol>"
+      : "<em>No highscores yet.</em>";
+    document.getElementById("report").innerHTML = html;
+  }catch(e){ console.error(e); }
 }
 
-/* Highscores */
+/* Local highscores (fallback) */
 function saveHighscore(s){
   const key="cq_scores"; const arr=JSON.parse(localStorage.getItem(key)||"[]");
   const name=PLAYER||"Player"; arr.push({name,score:s,ts:Date.now()});
@@ -486,9 +538,8 @@ $("#btnBackHome").addEventListener("click", ()=>{ $("#game").style.display="none
 document.getElementById("how").addEventListener("click",(e)=>{e.preventDefault(); alert("GitHub Pages: 1) Create a repo and push this index.html. 2) Settings → Pages → Source: 'Deploy from a branch', branch main, /. 3) Open the published link.");});
 
 /* Init */
-drawLogoClock(); // atualiza a cada 1s
 drawClock(3,15);
 </script>
 </body>
 </html>
-Mr. Meia is really proud of you!!
+Mr. Meia is really proud of you guys!!!
