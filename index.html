@@ -126,10 +126,14 @@
 
       <div class="intro-panel">
         <div class="name-row">
-          <label for="playerName" class="chip">Player name</label>
-          <input id="playerName" type="text" placeholder="Ex.: Mr. Meia" />
-          <button id="saveName" class="primary">Save</button>
-        </div>
+  <label for="playerName" class="chip">Player name</label>
+  <input id="playerName" type="text" placeholder="Ex.: Mr. Meia" />
+
+  <label for="classCode" class="chip">Class</label>
+  <input id="classCode" type="text" placeholder="Ex.: 4A" />
+
+  <button id="saveName" class="primary">Save</button>
+</div>
 
         <div class="mode-grid">
           <button class="card" id="goLearn"><b>Learn</b><br><span class="muted">Guided tutorial</span></button>
@@ -232,8 +236,8 @@
 <script>
 /* =============== Supabase SETUP =============== */
 /* 👉 SUBSTITUA pelos dados do seu projeto */
-const SB_URL = "https://YOUR-PROJECT.supabase.co";      // TODO
-const SB_ANON= "YOUR-ANON-PUBLIC-KEY";                  // TODO
+const SB_URL = "https://byextiftlfwtgkhnykst.supabase.co";      // TODO
+const SB_ANON= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ5ZXh0aWZ0bGZ3dGdraG55a3N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MDk3NzksImV4cCI6MjA3NDk4NTc3OX0.IodTioYDFKSudXLuGinE0nG46fG7Xv-2DumKy5Rjbk0";                  // TODO
 const supabase = window.supabase.createClient(SB_URL, SB_ANON);
 
 async function sbEnsureAuth(){
@@ -268,7 +272,9 @@ const nameInput = $("#playerName");
 const saveNameBtn = $("#saveName");
 const playerBadge = $("#playerBadge");
 let PLAYER = localStorage.getItem("cq_name") || "";
+let CLASS_CODE = localStorage.getItem("cq_class") || "GENERAL";
 let PLAYER_ID = null;
+
 
 async function setPlayerName(n){
   PLAYER = (n||"").trim() || "Player";
@@ -525,12 +531,12 @@ $("#btnHint").addEventListener("click", giveHint);
 $("#btnShowNums").addEventListener("click", ()=>{ showMinuteNums=!showMinuteNums; $("#btnShowNums").textContent = showMinuteNums ? "Hide minute numbers" : "Show minute numbers"; drawClock(target.h,target.m); });
 $("#btnSetAsk").addEventListener("click", ()=>{ dragMode=true; $("#dragInfo").hidden=false; $("#dragInfo").textContent="Drag the hands to your answer, then press Check."; setHourFromTarget(); });
 $("#btnMC").addEventListener("click", ()=>{ $("#mc").hidden=false; $("#typing").hidden=true; $("#kbdHint").hidden=false; });
-$("#btnTyping").addEventListener("click", ()=>{ $("#mc").hidden=true; $("#typing").hidden=false; $("#kbdHint").hidden=true; $("#answer").focus(); $("#answerZone").classList.remove("stop"); });
+$("#btnTyping").addEventListener("click", ()=>{ $("#mc").hidden=true; $("#typing").hidden=false; $("#kbdHint").hidden=true; $("#answer").focus(); $("#answerZone").List.remove("stop"); });
 $("#btnDrag").addEventListener("click", ()=>{ dragMode=true; $("#dragInfo").hidden=false; $("#dragInfo").textContent="Drag the hands to your answer, then press Check."; });
 
 $("#btnCheck").addEventListener("click", checkTextAnswer);
 $("#btnSkip").addEventListener("click", generateTime);
-$("#answer").addEventListener("focus", ()=> $("#answerZone").classList.add("stop"));
+$("#answer").addEventListener("focus", ()=> $("#answerZone").List.add("stop"));
 
 $("#level").addEventListener("change", e=>{ level=e.target.value; });
 $("#btnHome").addEventListener("click", ()=>{ $("#game").style.display="none"; $("#intro").style.display="grid"; });
